@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>basic-cooding</title>
+</head>
+
+<body>
+
+    <script id="ch0103/01" >
+        var a = +prompt();
+        var b = +prompt;
+        console.log("得到的结果为：" + (a + b));
+    </script>
+
+    <script id="ch0103/02">
+        var a = +prompt();
+        var b = +prompt();
+        var c = +prompt();
+        console.log("得到的结果为：" + (a + b) * c);
+    </script>
+
+    <script id="ch0103/03">
+        var a = +prompt();
+        var b = +prompt();
+        var c = +prompt();
+        console.log("得到的结果为：" + (a + b) / c);
+    </script>
+
+    <script id="ch0103/04">
+        var a = +prompt();
+        var b = +prompt();
+        console.log("得到的结果为：" + Math.round(a / b) + " " + a % b);
+    </script>
+
+    <script id="ch0103/05">
+        var a = +prompt();
+        var b = +prompt();
+        console.log("计算分数的浮点数值：" + (5 / 7).toFixed(9));
+    </script>
+
+    <script id="ch0103/06">
+        var a = +prompt();
+        var b = +prompt();
+        console.log("甲流疫情死亡率：" + (60 * 100 / 10433).toFixed(3) + "%");
+    </script>
+
+    <script id="ch0103/07">
+        var x = +prompt();
+        var a = +prompt();
+        var b = +prompt();
+        var c = +prompt();
+        var d = +prompt();
+        console.log("计算多项式的值" + ((Math.pow(x, 3) * a) + (b * Math.pow(x, 2)) + (c * x) + d));</script>
+
+    <script id="ch0103/08">
+        var b = +prompt();
+        console.log("温度表达转化" + 5 * (b - 32) / 9);
+    </script>
+
+    <script id="ch0103/09">
+        var b = +prompt();
+        console.log("与圆相关的计算：" + 2 * b + " " + 2 * b * Math.PI + " " + Math.PI * Math.pow(b, 2));
+    </script>
+
+    <script id="ch0103/10">
+        var a = +prompt();
+        var b = +prompt();
+        console.log("计算并联电阻的阻值" + (1 / (1 / a + 1 / b)).toFixed(2));
+    </script>
+
+    <script id="ch0103/11">
+        var a = +prompt();
+        var b = +prompt();
+        console.log("计算浮点数相除的余数" + a % b);
+    </script>
+
+
+    <script id="ch0103/12">
+        var r = +prompt();
+        console.log("计算球的体积" + (4 / 3 * Math.pow(r, 3) * 3.14).toFixed(2));
+    </script>
+
+
+    <script id="ch0103/13">
+        var a = +prompt();
+        var b = +prompt();
+        console.log("反向输出一个三位数" + b % 100 + b % 10 + b % 99 + "");
+    </script>
+
+
+    <script id="ch0103/14">
+        var a = +prompt();
+        var b = +prompt();
+        console.log("计算浮点数相除的余数" + a % b);
+    </script>
+
+    <script id="ch0103/15">
+        var n = +prompt();
+        var x = +prompt();
+        var y = +prompt();
+        console.log("计算浮点数相除的余数" + (n - Math.ceil(y / x)));
+    </script>
+
+    <script id="ch0103/16">
+        var x1 = +prompt();
+        var y1 = +prompt();
+        var x2 = +prompt();
+        var y2 = +prompt();
+        console.log("计算浮点数相除的余数" + Number(Math.sqrt((Math.pow((x2 - x1), 2)) + Math.pow((y2 - y1), 2))).toFixed(3));
+    </script>
+
+    <script id="ch0103/17">
+        var x1 = +prompt();
+        var y1 = +prompt();
+        var x2 = +prompt();
+        var y2 = +prompt();
+        var x3 = +prompt();
+        var y3 = +prompt();
+        var a = Math.sqrt((Math.pow((x2 - x1), 2)) + Math.pow((y2 - y1), 2));
+        var b = Math.sqrt((Math.pow((x3 - x2), 2)) + Math.pow((y3 - y2), 2));
+        var c = Math.sqrt((Math.pow((x3 - x1), 2)) + Math.pow((y3 - y1), 2));
+        var p = 1 / 2 * (a + b + c);
+        var s = Math.sqrt(p * (p - a) * (p - b) * (p - c)).toFixed(2);
+        console.log("计算浮点数相除的余数" + Number(s));
+    </script>
+
+    <script id="ch0103/18">
+        var a1 = +prompt();
+        var a2 = +prompt();
+        var n = +prompt();
+        var s = a1 + (n - 1) * (a2 - a1);
+        console.log("计算浮点数相除的余数" + Number(s));
+    </script>
+
+    <script id="ch0103/19">
+        var a1 = +prompt();
+        var a2 = +prompt();
+        var s = a1 * a2;
+        console.log("计算浮点数相除的余数" + Number(s));
+    </script>
+
+    <script id="ch0103/20">
+        var a1 = +prompt();
+        var s = Math.pow(2, a1);
+        console.log("计算浮点数相除的余数" + Number(s));
+    </script>
+
+
+</body>
+
+</html>
