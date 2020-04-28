@@ -6,8 +6,8 @@ var Ln2365539311 = {
             return false;
         }
     },
-    isNull:function(){
-        
-    }
+    isNull:function(val){
+        return val===null?true:false;
+    },
 
 }
