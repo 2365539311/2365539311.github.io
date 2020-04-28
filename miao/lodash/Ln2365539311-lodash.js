@@ -5,5 +5,9 @@ var Ln2365539311 = {
         }else{
             return false;
         }
+    },
+    isNull:function(){
+        
     }
+
 }
