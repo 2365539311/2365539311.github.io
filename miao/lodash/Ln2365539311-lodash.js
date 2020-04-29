@@ -9,5 +9,6 @@ var Ln2365539311 = {
     isNull:function(val){
         return val===null?true:false;
     },
+    
 
 }
