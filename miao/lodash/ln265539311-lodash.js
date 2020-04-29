@@ -1,4 +1,4 @@
-var Ln2365539311 = {
+var ln2365539311 = {
     isNaN:function(val){
         if(val!=val){
             return true;
@@ -9,6 +9,6 @@ var Ln2365539311 = {
     isNull:function(val){
         return val===null?true:false;
     },
-    
+
 
 }
