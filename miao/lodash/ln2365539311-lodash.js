@@ -44,10 +44,16 @@ var ln2365539311 = {
     },
     
     difference:function(arr,...args){
-        var res=arr.filter(function(val){
-            return !args[0].includes(val);
+        // var t = [];
+        // args.forEach(function(val){
+        //     return t=t.concat(val);
+        // });
+        // return arr.filter(val=>!t.includes(val));
+        return arr.filter((val)=>{
+            return !args.some((val2)=>{
+                return val2.includes(val);
+            });
         });
-        return res;
     },
 
     drop:function(arr,n=1){
@@ -64,7 +70,7 @@ var ln2365539311 = {
     
     findIndex:function(array, predicate, fromIndex = 0){
         if(!array) return -1;
-        for(var key=fromIndex; key<arr.length; key++){
+        for(var key=fromIndex; key<array.length; key++){
             // predicate 是需要寻找的值 在数组中找到其索引
             if(this.judgeType(predicate) == "Function"){ // 是函数
                 if(predicate(array[key])){
@@ -112,6 +118,9 @@ var ln2365539311 = {
 
     indexOf:function(arr,val,fromIndex=0){
         for(var i=fromIndex; i<arr.length; i++){
+            if(Number.isNaN(val) && Number.isNaN(arr[i])){
+                return i;
+            }
             if(arr[i]==val){
                 return i;
             }
@@ -142,6 +151,9 @@ var ln2365539311 = {
     
     lastIndexOf:function(arr,val,fromIndex=arr.length-1){
         for(var i=fromIndex; i>=0; i--){
+            if(Number.isNaN(val) && Number.isNaN(arr[i])){
+                return i;
+            }
             if(arr[i]==val){
                 return i;
             }
@@ -150,14 +162,14 @@ var ln2365539311 = {
     },
 
     nth:function(arr,n=0){
-        if(n>=0 && n<arr.length){
-            return arr[n];
-        }else{
-            if(Math.abs(n)==1)
-                return arr.slice(n);
-            return arr.slice(n,n+1);
-        }
-        return -1;
+        if(Math.abs(n)<arr.length){
+            if(n>=0){
+                return arr[n];
+            }else{
+                return arr[arr.length+n]    //  if(Math.abs(n)==1)  return arr.slice(n); arr.slice(n,n+1); 
+            }
+        } 
+        return [];
     },
 
     pull:function(){
