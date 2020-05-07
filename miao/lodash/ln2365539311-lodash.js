@@ -61,9 +61,43 @@ var ln2365539311 = {
         }
         return arr;
     },
+    
+    findIndex:function(array, predicate, fromIndex = 0){
+        if(!array) return -1;
+        for(var key=fromIndex; key<arr.length; key++){
+            // predicate 是需要寻找的值 在数组中找到其索引
+            if(this.judgeType(predicate) == "Function"){ // 是函数
+                if(predicate(array[key])){
+                    return key;
+                }
+            }else if(this.judgeType(predicate) == "Array"){  //  是数组
+                for(var i=0; i<predicate.length; i++){
+                    if(Object.entries(array[key]).flat().includes(predicate[i])){    
+                        if(i==predicate.length-1){
+                            return key;
+                        }
+                    }
+                }
+            }else if(this.judgeType(predicate) == "Object"){     // 是对象
+                var flag = true;
+                for(var h in array[key]){
+                    if(array[key][h] !== predicate[h]){  // 需要 把 对象中所有的 属性都走完
+                        flag = false;
+                    }
+                }
+                if(flag) return key;
+            }else if(this.judgeType(predicate) == "String"){     // 是字符串
+                if(arrar[key][predicate]){
+                    return key;
+                }
+            }
+        }
+        return -1;
+    },
 
-    findIndex:function(){
-
+    judgeType:function(predicate){
+        // 如果 type 是函数类型
+        return Object.prototype.toString.call(predicate).slice(8,-1);
     },
 
     head:function(array){
@@ -71,27 +105,86 @@ var ln2365539311 = {
             return array[0];
     },
 
-    flatten:function(){
-        
+    flatten:function(arr){
+        if(arr)
+            return arr.flat();
     },
 
-    indexOf:function(){
+    indexOf:function(arr,val,fromIndex=0){
+        for(var i=fromIndex; i<arr.length; i++){
+            if(arr[i]==val){
+                return i;
+            }
+        }
+        return -1;
+    },
+
+    
+    initial:function(arr){
+        return arr.slice(0,arr.length-1);
+    },
+
+    intersection:function(...arrs){
+        var res = arrs[0];
+        for(var i=0; i<arrs.length; i++){
+            res=res.filter(val=>arrs[i].includes(val));
+        }        
+        return res;
+    },
+
+    join:function(arr,separator=','){
+        return arr.join(separator);
+    },
+
+    last:function(arr){
+        return arr[arr.length-1];
+    },
+    
+    lastIndexOf:function(arr,val,fromIndex=arr.length-1){
+        for(var i=fromIndex; i>=0; i--){
+            if(arr[i]==val){
+                return i;
+            }
+        }
+        return -1;
+    },
+
+    nth:function(arr,n=0){
+        if(n>=0 && n<arr.length){
+            return arr[n];
+        }else{
+            if(Math.abs(n)==1)
+                return arr.slice(n);
+            return arr.slice(n,n+1);
+        }
+        return -1;
+    },
+
+    pull:function(){
+
+    },
+
+    pullAll:function(){
+
+    },
+
+    pullAt:function(){
+
+    },
+
+    remove:function(){
+
+    },
+
+    reverse:function(){
+
+    },
+
+    slice:function(){
 
     },
 
     /*
-    initial
-    intersection
-    join
-    last
-    lastIndexOf
-    nth
-    pull
-    pullAll
-    pullAt
-    remove
-    reverse
-    slice
     sortedIndex
     sortedIndexOf
     tail
