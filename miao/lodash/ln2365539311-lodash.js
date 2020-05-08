@@ -1,6 +1,6 @@
 var ln2365539311 = {
     isNaN:function(val){
-        if(val!=val){
+        if(val!=val && Number.isNaN(val)){
             return true;
         }else{
             return false;
@@ -93,7 +93,7 @@ var ln2365539311 = {
                 }
                 if(flag) return key;
             }else if(this.judgeType(predicate) == "String"){     // 是字符串
-                if(arrar[key][predicate]){
+                if(array[key][predicate]){
                     return key;
                 }
             }
@@ -162,54 +162,153 @@ var ln2365539311 = {
     },
 
     nth:function(arr,n=0){
-        if(Math.abs(n)<arr.length){
-            if(n>=0){
-                return arr[n];
-            }else{
-                return arr[arr.length+n]    //  if(Math.abs(n)==1)  return arr.slice(n); arr.slice(n,n+1); 
+        if(n>=0){
+            return arr[n];
+        }else{
+            return arr[arr.length+n];     
+        }
+    },
+
+    pull:function(arr,...args){
+        return arr.filter((val)=>{
+            return !args.includes(val);
+        });
+    },
+
+    pullAll:function(arr,arrDelete){
+        return arr.filter((val)=>{
+            return !arrDelete.includes(val);
+        });
+    },
+
+    pullAt:function(arr,...arrIndex){
+        var res = [];
+        var tmp = arr;
+        tmp = tmp.filter((val,index)=>{
+            var flag = true;
+            arrIndex.forEach((val2)=>{
+                flag=flag&&!val2.includes(index);
+                if(flag==false){
+                    res.push(tmp[index]);
+                }
+            });
+            return flag;
+        });
+        arr.filter((val,index)=>{
+            if(!tmp.includes(val)){
+                arr.splice(index,1);
+            };
+        });
+        return res;
+    },
+
+    remove:function(arr,predicate){
+        var res = arr.filter(predicate);
+        arr.filter((val,index)=>{
+            if(res.includes(val)){
+                arr.splice(index,1);
+            };
+        });
+		return  res;
+    },
+
+    reverse:function(arr){
+        var left=0;
+        var right = arr.length-1;
+        while(left<right){
+            var tmp = arr[left];
+            arr[left]=arr[right];
+            arr[right]=tmp;
+            left++;
+            right--;
+        }
+        return arr;
+    },
+
+    slice:function(arr,start=0,end=arr.length){
+        var res = [];
+        for(var i=start; i<end; i++){
+            res[res.length] = arr[i];
+        }
+        return res;
+    },
+
+    
+    sortedIndex:function(arr,val){
+        var left = 0;
+        var right = arr.length;
+        while(left<right){
+            var mid = Math.floor(left+(right-left)/2);
+            if(arr[mid] >= val){
+                right=mid;
+            }else if(arr[mid] < val ){
+                left=mid+1;
             }
-        } 
-        return [];
+        }
+        return left!=0?left:-1;
     },
 
-    pull:function(){
-
+    sortedIndexOf:function(arr,val){
+        var left = 0;
+        var right = arr.length;
+        while(left<right){
+            var mid = Math.floor(left+(right-left)/2);
+            if(arr[mid] >= val){
+                right=mid;
+            }else if(arr[mid] < val){
+                left=mid+1;
+            }
+        }
+        return left!=0?left:-1;
     },
 
-    pullAll:function(){
-
+    tail:function(arr){
+        return arr.slice(1);
     },
 
-    pullAt:function(){
-
+    take:function(arr,n=1){
+        return arr.slice(0,n);
     },
 
-    remove:function(){
+    takeRight:function(arr,n=1){
+        if(n>=arr.length) return arr;
+        return arr.slice(arr.length-n);
+    },
+    
+    union:function(...args){
+        var res = new Set(...args);
+        return [...res];
+    },
+    
+    uniq:function(){
 
     },
-
-    reverse:function(){
-
-    },
-
-    slice:function(){
+    
+    unzip:function(){
 
     },
+    
+    without:function(){
 
+    },
+    
+    xor:function(){
+
+    },
+    
+    zip:function(){
+
+    },
+    
+    zipObject:function(){
+
+    },
+    
+    includes:function(){
+
+    },
+    
     /*
-    sortedIndex
-    sortedIndexOf
-    tail
-    take
-    takeRight
-    union
-    uniq
-    unzip
-    without
-    xor
-    zip
-    zipObject
-    includes
     sample
     sampleSize
     shuffle
