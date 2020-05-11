@@ -275,49 +275,183 @@ var ln2365539311 = {
         return arr.slice(arr.length-n);
     },
     
-    union:function(...args){
-        var res = new Set(...args);
-        return [...res];
+    /**
+     * 从多个数组中返回一个没有重复元素的新数组
+     * @param  {[Arrays]} args 多个数组
+     */
+    union:function(...args){    // Set 入参 iterator  对象、Map、字符串、数组
+        var res = [];
+        args.forEach((val)=>{
+            val.forEach((val2)=>{
+                if(!res.includes(val2)){
+                    res.push(val2);
+                }
+            });
+        });
+        return res;
     },
     
-    uniq:function(){
+    /**
+     * 数组去重，且顺序不发生改变
+     * @param {Array} arr 数组
+     */
+    uniq:function(arr){
+        var set = new Set([...arr]);
+        return Array.from(set);
+    },
+    
+    /**
+     * 还原为原来的数组
+     * @param {Array} array 二维数组  
+     */
+    unzip:function(array){
+        var res = new Array(array[0].length);
+        array.forEach((arr)=>{
+            arr.forEach((val,index)=>{
+                res[index].push(val);
+            });
+        });
+        return res;
+    },
+
+    /**
+     * _.zip(['a', 'b'], [1, 2], [true, false]);
+        // => [['a', 1, true], ['b', 2, false]]
+     * @param  {Array} args 不定数的数组 
+     */
+    zip:function(...args){
+        var res = [];
+        var maxLen = -Infinity;
+        args.forEach((val)=>{
+            maxLen = Math.max(maxLen,val.length);
+        });
+        console.log("子数组最大长度为：",maxLen);
+        for(var i=0; i<maxLen; i++){
+            var tmp = [];
+            for(var j=0; j<args.length; j++){
+                tmp.push(args[j][i]);
+            }
+            res.push(tmp);
+        }
+        return res;
+    },
+    
+    /**
+     * 
+     * @param {Array} arrProps 属性数组
+     * @param {Array} arrVal 值数组
+     */
+    zipObject:function(arrProps,arrVal){
+        var obj = {};
+        for(var i=0; i<arrProps.length; i++){
+            for(var j=0; j<arrVal.length; j++){
+                obj[arrProps[i]]=arrVal[j];
+                break;
+            }
+        }
+        return obj;
+    },
+
+    /**
+     * 创建一个排除给定值的数组
+     * @param {Array} arr 数组
+     * @param  {Number} args 不定数量的参数
+     */
+    without:function(arr,...args){
+        var connect = [];
+        args.forEach((val)=>{
+            connect.concat(val);
+        });
+        var re = this.union(arr,connect);
+        return re;
+    },
+    
+    xor:function(...args){
+        var res = [];
+        args.forEach((valArr)=>{
+            valArr.forEach((val)=>{
+                if(!res.includes(val)){
+                    res.push(val);
+                }
+            });
+        });
+        return res;
+    },
+    
+    /**
+     * 返回true或false
+     * @param {Object、Array、String} collection 集合：对象、数组或字符串
+     * @param {*} val  
+     * @param {索引} fromIndex 
+     */
+    includes:function(collection,val,fromIndex=0){
+        var type = this.judgeType(collection);
+        if(type=="Array"){
+            for(var i=fromIndex; i<collection.length; i++){
+                if(collection.includes(val)){
+                    return true;
+                }
+            }
+        }else if(type=="Object"){
+            // 拿到对象 值的数组
+            var objValArr = Object.values(collection);
+            for(var i=fromIndex; i<objValArr.length; i++){
+                if(objValArr.includes(val)){
+                    return true;
+                }
+            }
+        }else if(type=="String"){
+            return collection.includes(val);
+        }
+    },
+    
+    startsWith:function(str='',target,position=0){
+        for(var i=position; i<str.length; i++){
+            if(str[i]==target){
+                return true;
+            }
+        }
+        return false;
+    },
+
+    
+    sample:function(){
+
+    },
+
+    sampleSize:function(){
 
     },
     
-    unzip:function(){
+    shuffle:function(){
 
     },
     
-    without:function(){
+    size:function(){
 
     },
     
-    xor:function(){
+    eq,gt,gte:function(){
 
     },
     
-    zip:function(){
+    lt,lte:function(){
 
     },
     
-    zipObject:function(){
+    add,ceil:function(){
 
     },
     
-    includes:function(){
+    divide:function(){
+
+    },
+    
+    floor:function(){
 
     },
     
     /*
-    sample
-    sampleSize
-    shuffle
-    size
-    eq,gt,gte
-    lt,lte
-    add,ceil
-    divide
-    floor
     max
     mean
     min
@@ -354,7 +488,7 @@ var ln2365539311 = {
     snakeCase
     split
     startCase
-    startsWith
+    
     trim
     trimEnd
     trimStart
