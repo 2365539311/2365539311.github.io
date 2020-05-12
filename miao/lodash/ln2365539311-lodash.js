@@ -305,7 +305,10 @@ var ln2365539311 = {
      * @param {Array} array 二维数组  
      */
     unzip:function(array){
-        var res = new Array(array[0].length);
+        var res = [];
+        for(var i=0; i<array[0].length; i++){
+			res.push([]);
+		}
         array.forEach((arr)=>{
             arr.forEach((val,index)=>{
                 res[index].push(val);
@@ -344,7 +347,7 @@ var ln2365539311 = {
     zipObject:function(arrProps,arrVal){
         var obj = {};
         for(var i=0; i<arrProps.length; i++){
-            for(var j=0; j<arrVal.length; j++){
+            for(var j=i; j<arrVal.length; j++){
                 obj[arrProps[i]]=arrVal[j];
                 break;
             }
@@ -358,24 +361,30 @@ var ln2365539311 = {
      * @param  {Number} args 不定数量的参数
      */
     without:function(arr,...args){
-        var connect = [];
-        args.forEach((val)=>{
-            connect.concat(val);
-        });
-        var re = this.union(arr,connect);
-        return re;
+        return arr.filter(item=>!args.includes(item));
     },
     
     xor:function(...args){
         var res = [];
         args.forEach((valArr)=>{
-            valArr.forEach((val)=>{
-                if(!res.includes(val)){
-                    res.push(val);
-                }
-            });
+            res=res.concat(valArr);
         });
-        return res;
+        console.log(res);
+        var obj = {};
+        res.forEach((val)=>{
+            if(obj[val]){
+				obj[val]++;
+			}else{
+				obj[val]=1;
+			}
+        })
+        var r = [];
+        for(var i in obj){
+            if(obj[i]==1){
+                r.push(Number(i));
+            }
+        }
+        return r;
     },
     
     /**
@@ -388,7 +397,7 @@ var ln2365539311 = {
         var type = this.judgeType(collection);
         if(type=="Array"){
             for(var i=fromIndex; i<collection.length; i++){
-                if(collection.includes(val)){
+                if(collection[i]==val){
                     return true;
                 }
             }
@@ -403,6 +412,7 @@ var ln2365539311 = {
         }else if(type=="String"){
             return collection.includes(val);
         }
+        return false;
     },
     
     startsWith:function(str='',target,position=0){
@@ -415,40 +425,85 @@ var ln2365539311 = {
     },
 
     
-    sample:function(){
-
+    sample:function(collection){
+        var type = this.judgeType(collection);
+        if(type=="Array"){
+            var num = Math.floor(Math.random()*(type.length));
+            return type[num];
+        }else if(type=="Object"){
+            var num = Math.random()*(Object.values(type).length);
+            return type[num];
+        }
     },
 
-    sampleSize:function(){
+    sampleSize:function(collection,n=1){
+        var n = Math.floor(Math.random()*(collection.length));
+        var len = collection.length;
+        var res = [];
+        for(var i=n%len; i<len; i++){
+            res.push(collection[i]);
+        }
+        for(var i=0; i<collection.length; i++){
+            if(res.length<n && !res.includes(collection[i])){
+                res.push(collection[i]);
+            }
+        }
+        return res;
+    },
+    
+    shuffle:function(collection){  // 洗牌算法 - 打乱数组
+        var n = collection.length;
+        for(var i=0; i<n; i++){
+            var randNum = i+Math.floor(Math.random()*(n-i));
+            var tmp = collection[i];
+            collection[i] = collection[randNum];
+            collection[randNum]=tmp;
+        }
+        return collection;
+    },
+    
+    size:function(collection){
+        return Object.values(collection).length;
+    },
+    
+    eq:function(value, other){
+        if(value!==value && other!==other){
+            return true;
+        }else{
+            return value==other;
+        }
+    },
+
+    gt:function(value, other){
+        return val > other
+    },
+    
+    gte:function(value, other){
+        return this.eq(value, other) || this.gt(value, other)
+    },
+    
+    lt:function(value, other){
+        return val < other
+    },
+    
+    lte:function(value, other){
+        return this.eq(value, other) || this.lt(value, other)
+    },
+    
+    add:function(augend, addend){
+        return augend + addend;
+    },
+    
+    ceil:function(number, [precision=0]){
 
     },
     
-    shuffle:function(){
-
+    divide:function(dividend, divisor){
+        return dividend / divisor;
     },
     
-    size:function(){
-
-    },
-    
-    eq,gt,gte:function(){
-
-    },
-    
-    lt,lte:function(){
-
-    },
-    
-    add,ceil:function(){
-
-    },
-    
-    divide:function(){
-
-    },
-    
-    floor:function(){
-
+    floor:function(number, [precision=0]){
+        
     },
     
     /*
