@@ -1,11 +1,15 @@
 var ln2365539311 = {
+
     isNaN:function(val){
         if(val!=val && Number.isNaN(val)){
             return true;
+        }else if(typeof val == 'object'){
+            return val.toString()==='NaN';
         }else{
             return false;
         }
     },
+
     isNull:function(val){
         return val===null?true:false;
     },
@@ -420,6 +424,9 @@ var ln2365539311 = {
             if(str[i]==target){
                 return true;
             }
+            if(i==0){
+                return false;
+            }
         }
         return false;
     },
@@ -429,10 +436,10 @@ var ln2365539311 = {
         var type = this.judgeType(collection);
         if(type=="Array"){
             var num = Math.floor(Math.random()*(type.length));
-            return type[num];
+            return collection[num];
         }else if(type=="Object"){
             var num = Math.random()*(Object.values(type).length);
-            return type[num];
+            return collection[num];
         }
     },
 
@@ -470,12 +477,12 @@ var ln2365539311 = {
         if(value!==value && other!==other){
             return true;
         }else{
-            return value==other;
+            return value===other;
         }
     },
 
     gt:function(value, other){
-        return val > other
+        return value > other
     },
     
     gte:function(value, other){
@@ -483,7 +490,7 @@ var ln2365539311 = {
     },
     
     lt:function(value, other){
-        return val < other
+        return value < other
     },
     
     lte:function(value, other){
@@ -495,7 +502,13 @@ var ln2365539311 = {
     },
     
     ceil:function(number, [precision=0]){
-
+        if (precision > 0) {
+            return Math.ceil(number * 10 ** precision) / 10 ** precision;
+        } else if (precision < 0) {
+            return Math.ceil(number / 10 ** (-precision)) * 10 ** (-precision);
+        } else {
+            return Math.ceil(number)
+        }
     },
     
     divide:function(dividend, divisor){
@@ -503,7 +516,13 @@ var ln2365539311 = {
     },
     
     floor:function(number, [precision=0]){
-        
+        if (precision > 0) {
+            return Math.floor(number * 10 ** precision) / 10 ** precision;
+        } else if (precision < 0) {
+            return Math.floor(number / 10 ** (-precision)) * 10 ** (-precision);
+        } else {
+            return Math.floor(number)
+        }
     },
     
     /*
