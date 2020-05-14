@@ -501,13 +501,13 @@ var ln2365539311 = {
         return augend + addend;
     },
     
-    ceil:function(number, [precision=0]){
-        if (precision > 0) {
-            return Math.ceil(number * 10 ** precision) / 10 ** precision;
-        } else if (precision < 0) {
-            return Math.ceil(number / 10 ** (-precision)) * 10 ** (-precision);
+    ceil:function(val,p=0){
+        if (p > 0) {
+            return Math.ceil(val * 10 ** p) / 10 ** p;
+        } else if (p < 0) {
+            return Math.ceil(val / 10 ** (-p)) * 10 ** (-p);
         } else {
-            return Math.ceil(number)
+            return Math.ceil(val);
         }
     },
     
@@ -515,64 +515,362 @@ var ln2365539311 = {
         return dividend / divisor;
     },
     
-    floor:function(number, [precision=0]){
-        if (precision > 0) {
-            return Math.floor(number * 10 ** precision) / 10 ** precision;
-        } else if (precision < 0) {
-            return Math.floor(number / 10 ** (-precision)) * 10 ** (-precision);
+    floor:function(val, p=0){
+        if (p > 0) {
+            return Math.floor(val * 10 ** p) / 10 ** p;
+        } else if (p < 0) {
+            return Math.floor(val / 10 ** (-p)) * 10 ** (-p);
         } else {
-            return Math.floor(number)
+            return Math.floor(val);
         }
     },
     
-    /*
-    max
-    mean
-    min
-    multiply
-    round
-    substract
-    sum
-    at
-    defaults
-    get
-    set
-    has
-    hasIn
-    invert
-    keys
-    assign
-    omit
-    pick
-    values
-    camelCase
-    capitalize
-    deburr
-    endsWith
-    escape
-    kebabCase
-    lowerCase
-    lowerFirst
-    pad
-    padEnd
-    padStart
-    parseInt
-    repeat
-    replace
-    snakeCase
-    split
-    startCase
     
-    trim
-    trimEnd
-    trimStart
-    truncate
-    unescape
-    upperCase
-    upperFirst
-    words
-    range
-    */
+    max:function(array){
+        if(array.length==0){
+            return undefined;
+        }else{
+            return Math.max(...array);
+        }
+    },
+
+    mean:function(array){
+        var sum = array.reduce((acm,val)=>{
+            return acm+val;
+        });
+        return sum/array.length;
+        // return array.reduce((acm,val)=>acm+val)/array.length;
+    },
+
+    min:function(array){
+        if(!array.length){
+            return undefined;
+        }
+        return array.reduce((acm,val)=>acm<val?acm:val); 
+    },
+    
+    multiply:function(multiplier, multiplicand){
+        return multiplier*multiplicand;
+    },
+    
+    round:function(number,precision=0){
+        if(precision<0){
+            precision=-precision;
+            number=number/(10 ** precision);
+            number=Math.ceil(number);
+            return number*10**precision;
+        }
+        return Number(number.toFixed(precision));
+    },
+    
+    substract:function(minuend, subtrahend){
+        return minuend-subtrahend;
+    },
+    
+    sum:function(array){
+        return array.reduce((acm,val)=>acm+val);
+    },
+    
+    at:function(object, ...paths){
+        var res = [];
+        paths.flat().forEach((val)=>{
+            console.log(eval('object.'+val));  // 点 之前的必须是一个对象
+            val=eval('object.'+val);
+            res.push(val);
+        });
+        return res;
+    },
+    
+    defaults:function(){  // 后面的会把前面的覆盖
+        var obj = objs.flat();
+        for(let sourceObj of obj){
+            console.log(sourceObj);  // 对象
+            for(var s in sourceObj){
+                if(!target[s]){
+                    target[s]=sourceObj[s];
+                }
+            }
+        }
+        return target;
+    },
+    
+    /**
+     * 根据路径返回值，如果为undefined则返回默认值
+     * @param {Object} object 传入的对象
+     * @param {Array|String} path 路径
+     * @param {*} defaultValue 默认值
+     */
+    get:function(object,path,defaultValue){
+        if(typeof path == "string"){
+            var arr = path.split('.');
+            var str = 'object';
+            for(var i=0; i<arr.length; i++){
+                str+='.'+arr[i];
+                if(eval(str)==undefined){
+                    return defaultValue;
+                }
+            }
+            return eval(str);
+        }else if(typeof path == "object"){
+            var s = '';
+            for(var key=0; key<path.length; key++){
+                if(/\d+/.test(path[key])){
+                    path[key]='['+path[key]+']';
+                }
+                if(/\d+/.test(path[key+1])){
+                    s=s+path[key];
+                }else{    
+                    s=s+path[key]+'.';
+                }
+            }
+            s=s.substring(0,s.length-1);
+            return eval('object.'+s);
+        }
+    },  
+    
+    // 检验属性是否存在的递归函数,没有的话递归创建
+
+    /**
+     * 设置对象路径的值。如果路径的一部分不存在，则会创建它。 为缺少的索引属性创建数组，而为所有其他缺少的属性创建对象。 使用_.setWith自定义路径创建。
+     * @param {Object} object 入参对象
+     * @param {String|Array} path 路径
+     * @param {*} value 设置路径的值
+     */
+    set:function(object, path, value){
+        if(typeof path == "string"){
+            var arr = path.split('.');
+            var str = 'object';
+            for(var i=0; i<arr.length; i++){
+                str+='.'+arr[i];
+                if(eval(str) && i==arr.length-1){
+                    eval(str+"="+value);
+                }
+            }
+            return object;
+        }else if(typeof path == "object"){
+            var s = 'object.';
+            for(var key=0; key<path.length; key++){
+                var tmp = s;
+                if(!/\d+/.test(path[key])){  // 如果当前元素存在数字的话 期望不进行编辑
+                    tmp=tmp.substring(0,tmp.length-1);
+                }
+                if(key>0 && eval(tmp)==undefined){
+                    // 判断 path[key] 是什么 然后设置相应的类型
+                    if(/\d+/.test(path[key])){  // 当前元素的下一个元素是 数字 代表 为数组
+                        // 设置数组
+                        eval(tmp+'=[]');
+                        eval(tmp+'['+path[key]+']={}');
+                    }else{
+                        eval(tmp+'={}');
+                        eval(tmp+'.'+path[key]+'={}');   // 前一个y都没有就直接设置后面的z会直接报错
+                    }
+                }
+                if(/\d+/.test(path[key])){
+                    path[key]='['+path[key]+']';
+                }
+                if(/\d+/.test(path[key+1])){
+                    s=s+path[key];
+                }else{    
+                    s=s+path[key]+'.';
+                }
+            }
+            s=s.substring(0,s.length-1);
+            eval(s+"="+value);
+            return object;
+        }
+    },
+    
+    /**
+     * 
+     * @param {Object} object 对象
+     * @param {Array|String} path 路径
+     */
+    has:function(object, path){
+        if(typeof path == "string"){
+            var tmp = path.split('.');
+            for(var i in tmp){
+                if(!object.hasOwnProperty(tmp[i])){
+                    // object=object[tmp[i]];  // 把object拿到对应的属性重新赋值给该对象
+                    // console.log("重新赋值后的object为：",object);
+                // }else{
+                    return false;
+                }
+            }
+        }else if(typeof path == "object"){  // 数组
+            for(var j in path){
+                if(!object.hasOwnProperty(path[j])){
+                    // object=object[path[j]];
+                // }else{
+                    return false;
+                }
+            }
+        }
+        return true;
+    },
+    
+    hasIn:function(object, path){
+        if(typeof path == "string"){
+            var tmp = path.split('.');
+            for(var i in tmp){
+                if(!object.hasOwnProperty(tmp[i])){
+                    return false;
+                }
+            }
+        }else if(typeof path == "object"){  // 数组
+            for(var j in path){
+                if(!object.hasOwnProperty(path[j])){
+                    return false;
+                }
+            }
+        }
+        return true;
+    },
+    
+    invert:function(object){
+        var res = {};
+        for(var key in object){
+            res[object[key]]=key;
+        }
+        return res;
+    },
+    
+    keys:function(object){
+        return Object.keys(object);
+    },
+    
+    assign:function(object, ...sources){
+        return Object.assign(object,...sources);
+    },
+    
+    omit:function(object,...paths){
+        var flatPath = paths.flat();
+        for(var val of flatPath){  // a
+            delete object[val];
+        }
+        return object;
+    },
+    
+    pick:function(object,...paths){
+        var res = {};
+        var flatPath = paths.flat();
+        for(var val of flatPath){  // a
+            res[val]=object[val];
+        }
+        return res;
+    },
+    
+    values:function(object){
+        return Object.values(object);
+    },
+    
+    
+    camelCase:function(){
+        
+    },
+
+    capitalize:function(){
+
+    },
+    
+    deburr:function(){
+
+    },
+    
+    endsWith:function(){
+
+    },
+    
+    escape:function(){
+
+    },
+    
+    kebabCase:function(){
+
+    },
+    
+    lowerCase:function(){
+
+    },
+    
+    lowerFirst:function(){
+
+    },
+    
+    pad:function(){
+
+    },
+    
+    padEnd:function(){
+
+    },
+    
+    padStart:function(){
+
+    },
+    
+    parseInt:function(){
+
+    },
+    
+    repeat:function(){
+
+    },
+    
+    replace:function(){
+
+    },
+    
+    snakeCase:function(){
+
+    },
+    
+    split:function(){
+
+    },
+    
+    startCase:function(){
+
+    },
+    
+    
+    
+    trim:function(){
+
+    },
+    
+    trimEnd:function(){
+
+    },
+    
+    trimStart:function(){
+
+    },
+    
+    truncate:function(){
+
+    },
+    
+    unescape:function(){
+
+    },
+    
+    upperCase:function(){
+
+    },
+    
+    upperFirst:function(){
+
+    },
+    
+    words:function(){
+
+    },
+    
+    range:function(){
+
+    },
+    
+    
 
 
 }
