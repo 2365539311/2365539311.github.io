@@ -763,40 +763,88 @@ var ln2365539311 = {
         return Object.values(object);
     },
     
-    
-    camelCase:function(){
-        
+    /**
+     * 实现将字符转换为驼峰写法
+     * @param {String} s 入参字符串
+     */
+    camelCase:function(s=''){  //  使用正则求解
+        s+=' ';
+        var resArr = [];
+        var resStr = '';
+        var tmp='';
+        for(var i=0; i<s.length; i++){
+            if(this.area(s[i])){
+                tmp+=s[i];	
+            }else{
+                if(tmp.length!=0)
+                    resArr.push(tmp);
+                tmp = '';
+            }
+        }
+        resArr.forEach((val,index)=>{
+            val=val.toLowerCase();
+            if(index>0){
+                val=val[0].toUpperCase()+val.substring(1);
+            }
+            resStr+=val;
+        });
+        return resStr;
     },
 
-    capitalize:function(){
+    /**
+     * 检测该单个字符是否为字母
+     * @param {Character} c 单个字符
+     */
+    wordInArea:function(c){ 
+        if(c.toLowerCase().charCodeAt()<=122 && c.toLowerCase().charCodeAt()>=97){  // 转成小写  在97和122之间
+            return true;
+        }
+        return false;
+    },
 
+    capitalize:function(s){
+        s=s.toLowerCase();
+        return s[0].toUpperCase()+s.substring(1);
     },
     
     deburr:function(){
 
     },
     
-    endsWith:function(){
-
+    endsWith:function(string='',target,position=string.length){
+        if(string[position-1]==target){
+            return true;
+        }
+        return false;
     },
     
-    escape:function(){
-
+    escape:function(string=''){
+        let reg = /[&<>"']/g
+        let map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }
+        return string.replace(reg, e => map[e]);
     },
     
-    kebabCase:function(){
-
+    kebabCase:function(string=''){
+        string=string.toLowerCase();
+        return string.match(/[a-z]+[A-Z]+/gmi).join('-');
     },
     
-    lowerCase:function(){
-
+    lowerCase:function(string=''){
+        var arr = string.match(/[a-z]+[A-Z]+/gmi);
+        return arr.map(val=>val.toLowerCase()).join(' ');
     },
     
-    lowerFirst:function(){
-
+    lowerFirst:function(string=''){
+        return string[0].toLowerCase()+string.substring(1);
     },
     
-    pad:function(){
+    pad:function(string='', length=0, chars=' '){
 
     },
     
@@ -808,34 +856,45 @@ var ln2365539311 = {
 
     },
     
-    parseInt:function(){
-
+    parseInt:function(string,radix=10){
+        return parseInt(string,radix);
     },
     
-    repeat:function(){
-
+    repeat:function(string='',n=1){
+        var res = '';
+        for(var i=0; i<n; i++){
+            res+=string;
+        }
+        return res;
     },
     
-    replace:function(){
-
+    replace:function(string='', pattern, replacement){
+        return string.replace(pattern,replacement);
     },
     
-    snakeCase:function(){
-
+    snakeCase:function(string=''){
+        var arr = string.match(/[a-z]+[A-Z]+/gmi);
+        return arr.map(val=>val.toLowerCase()).join('_');
     },
     
-    split:function(){
-
+    split:function(string='',separator,limit){
+        return string.split(separator).slice(0,limit);
     },
     
     startCase:function(){
-
+        var arr = string.match(/[a-z]+[A-Z]+/gmi);
+        return arr.map(val=>val[0].toUpperCase()).join(' ');
     },
     
     
-    
-    trim:function(){
-
+    trim:function(string='',chars=' '){
+        var res = string;
+		var charArr = chars.split('');
+		for(var i=0; i<charArr.length; i++){
+			var reg = new RegExp(charArr[i],"g");
+			res=res.replace(reg,'');
+		}
+        return res;
     },
     
     trimEnd:function(){
@@ -870,7 +929,9 @@ var ln2365539311 = {
 
     },
     
-    
+    keyBy:function(array,name){
+        
+    }
 
 
 }
