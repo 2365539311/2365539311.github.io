@@ -581,7 +581,7 @@ var ln2365539311 = {
         return res;
     },
     
-    defaults:function(){  // 后面的会把前面的覆盖
+    defaults:function(...objs){  // 后面的会把前面的覆盖
         var obj = objs.flat();
         for(let sourceObj of obj){
             console.log(sourceObj);  // 对象
@@ -689,7 +689,7 @@ var ln2365539311 = {
         if(typeof path == "string"){
             var tmp = path.split('.');
             for(var i in tmp){
-                if(!object.hasOwnProperty(tmp[i])){
+                if(object.hasOwnProperty(tmp[i])){
                     object=object[tmp[i]];  // 把object拿到对应的属性重新赋值给该对象
                     // console.log("重新赋值后的object为：",object);
                 }else{
@@ -698,7 +698,7 @@ var ln2365539311 = {
             }
         }else if(typeof path == "object"){  // 数组
             for(var j in path){
-                if(!object.hasOwnProperty(path[j])){
+                if(object.hasOwnProperty(path[j])){
                     object=object[path[j]];
                 }else{
                     return false;
@@ -712,7 +712,7 @@ var ln2365539311 = {
         if(typeof path == "string"){
             var tmp = path.split('.');
             for(var i in tmp){
-                if(!object.hasOwnProperty(tmp[i])){
+                if(object.hasOwnProperty(tmp[i])){
                     object=object[tmp[i]];  // 把object拿到对应的属性重新赋值给该对象
                     // console.log("重新赋值后的object为：",object);
                 }else{
@@ -721,7 +721,7 @@ var ln2365539311 = {
             }
         }else if(typeof path == "object"){  // 数组
             for(var j in path){
-                if(!object.hasOwnProperty(tmp[i])){
+                if(object.hasOwnProperty(tmp[i])){
                     object=object[tmp[i]];  // 把object拿到对应的属性重新赋值给该对象
                     // console.log("重新赋值后的object为：",object);
                 }else{
@@ -779,7 +779,7 @@ var ln2365539311 = {
         var resStr = '';
         var tmp='';
         for(var i=0; i<s.length; i++){
-            if(this.area(s[i])){
+            if(this.wordInArea(s[i])){
                 tmp+=s[i];	
             }else{
                 if(tmp.length!=0)
@@ -838,11 +838,11 @@ var ln2365539311 = {
     
     kebabCase:function(string=''){
         string=string.toLowerCase();
-        return string.match(/[a-z]+[A-Z]+/gmi).join('-');
+        return string.match(/[a-z]{3}/gmi).join('-');
     },
     
     lowerCase:function(string=''){
-        var arr = string.match(/[a-z]+[A-Z]+/gmi);
+        var arr = string.match(/[A-Z][a-z]+|[A-Z]+|[a-z]+/g);
         return arr.map(val=>val.toLowerCase()).join(' ');
     },
     
@@ -850,16 +850,37 @@ var ln2365539311 = {
         return string[0].toLowerCase()+string.substring(1);
     },
     
-    pad:function(string='', length=0, chars=' '){
-
+    pad:function(str='', n=0, val=' '){  //  *
+        let len = str.length;
+        if (len < n) {
+            str = str.padStart(Math.floor((n - len) / 2) + len, val)
+            str = str.padEnd(n, val);
+        }
+        return str
     },
     
-    padEnd:function(){
-
+    padEnd:function(str, length, repeat = " "){
+        while (true) {
+            if (str.length >= length) {
+                break;
+            }
+            str += repeat;
+        }
+        return str.substr(0, length);
     },
     
-    padStart:function(){
-
+    padStart:function(str, length, repeat = " "){
+        var result = "";
+        while (true) {
+            if (str.length + result.length >= length) {
+                break;
+            }
+            result = repeat + result;
+        }
+        if (str.length + result.length > length) {
+            result = result.substr(0, length - str.length);
+        }
+        return result + str;
     },
     
     parseInt:function(string,radix=10){
@@ -879,7 +900,7 @@ var ln2365539311 = {
     },
     
     snakeCase:function(string=''){
-        var arr = string.match(/[a-z]+[A-Z]+/gmi);
+        var arr = string.match(/[A-Z][a-z]+|[A-Z]+|[a-z]+/gm);
         return arr.map(val=>val.toLowerCase()).join('_');
     },
     
@@ -887,8 +908,8 @@ var ln2365539311 = {
         return string.split(separator).slice(0,limit);
     },
     
-    startCase:function(){
-        var arr = string.match(/[a-z]+[A-Z]+/gmi);
+    startCase:function(string){
+        var arr = string.match(/[a-z]+[A-Z]+/gm);
         return arr.map(val=>val[0].toUpperCase()).join(' ');
     },
     
@@ -939,20 +960,20 @@ var ln2365539311 = {
     },
     
     upperCase:function(string=''){
-        var arr = string.match(/[a-z]+[A-Z]+/gmi);
-        return arr.map(val=>val.toUpperCase());
+        var arr = string.match(/[A-Z][a-z]+|[A-Z]+|[a-z]+/gm);
+        return arr.map(val=>val.toUpperCase()).join(" ");
     },
     
     upperFirst:function(string=''){
         return string.replace(/^.{1}/gmi,e => e.toUpperCase());
     },
     
-    words:function(string,pattern){
-        if(typeof pattern == 'string'){
-           pattern ='\\w+';
-           var reg = new RegExp(pattern,"g");
-           return string.match(reg);
-        }
+    words:function(string='',pattern=/\w+/g){
+        // if(typeof pattern == 'string'){
+        //    pattern ='\\w+';
+        //    var reg = new RegExp(pattern,"g");
+        //    return string.match(reg);
+        // }
         return string.match(pattern);        
     },
     
