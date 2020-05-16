@@ -690,17 +690,17 @@ var ln2365539311 = {
             var tmp = path.split('.');
             for(var i in tmp){
                 if(!object.hasOwnProperty(tmp[i])){
-                    // object=object[tmp[i]];  // 把object拿到对应的属性重新赋值给该对象
+                    object=object[tmp[i]];  // 把object拿到对应的属性重新赋值给该对象
                     // console.log("重新赋值后的object为：",object);
-                // }else{
+                }else{
                     return false;
                 }
             }
         }else if(typeof path == "object"){  // 数组
             for(var j in path){
                 if(!object.hasOwnProperty(path[j])){
-                    // object=object[path[j]];
-                // }else{
+                    object=object[path[j]];
+                }else{
                     return false;
                 }
             }
@@ -713,12 +713,18 @@ var ln2365539311 = {
             var tmp = path.split('.');
             for(var i in tmp){
                 if(!object.hasOwnProperty(tmp[i])){
+                    object=object[tmp[i]];  // 把object拿到对应的属性重新赋值给该对象
+                    // console.log("重新赋值后的object为：",object);
+                }else{
                     return false;
                 }
             }
         }else if(typeof path == "object"){  // 数组
             for(var j in path){
-                if(!object.hasOwnProperty(path[j])){
+                if(!object.hasOwnProperty(tmp[i])){
+                    object=object[tmp[i]];  // 把object拿到对应的属性重新赋值给该对象
+                    // console.log("重新赋值后的object为：",object);
+                }else{
                     return false;
                 }
             }
@@ -897,40 +903,115 @@ var ln2365539311 = {
         return res;
     },
     
-    trimEnd:function(){
+    trimEnd:function(string='',chars=' '){
+        // var res = string;
+		// var charArr = chars.split('');
+		// for(var i=0; i<charArr.length; i++){
+		// 	var reg = new RegExp("(?<=[a-z]{3}).*"+charArr[i],"gmi");
+		// 	res=res.replace(reg,'');
+		// }
+        // return res;
+        return string.replace(/(?<=[a-z]{3}).*/gmi,"");
+    },
+    
+    trimStart:function(string='',chars=' '){
+        return string.replace(/.*(?<=[a-z]{3})/gmi,"");
+    },
+    
+    truncate:function(string='',options={}){
 
     },
     
-    trimStart:function(){
-
+    unescape:function(string=''){
+        let map = {
+            '&amp;': '&',
+            '&lt;': '<',
+            '&gt;': '>',
+            '&quot;': '"',
+            "&#39;": "'"
+        }
+		for(var key in map){
+            if(string.includes(key)){
+				string=string.replace(key,map[key]);
+            }
+        }
+		return string;
     },
     
-    truncate:function(){
-
+    upperCase:function(string=''){
+        var arr = string.match(/[a-z]+[A-Z]+/gmi);
+        return arr.map(val=>val.toUpperCase());
     },
     
-    unescape:function(){
-
+    upperFirst:function(string=''){
+        return string.replace(/^.{1}/gmi,e => e.toUpperCase());
     },
     
-    upperCase:function(){
-
+    words:function(string,pattern){
+        if(typeof pattern == 'string'){
+           pattern ='\\w+';
+           var reg = new RegExp(pattern,"g");
+           return string.match(reg);
+        }
+        return string.match(pattern);        
     },
     
-    upperFirst:function(){
-
+    range:function(start=0,end,step=1){
+        var res = [];
+        if(arguments.length==1){
+            if(arguments[0]>0){
+                for(var i=0; i<start; i+=1){
+                    res.push(i);
+                }
+                return res;
+            }else if(arguments[0]<0){
+                for(var i=0; res.length<Math.abs(start); i-=1){
+                    res.push(i);
+                }
+                return res;
+            }else if(arguments[0]==0){
+                return res;
+            }
+        }
+        // 两个或三个参数
+        if(step==0){
+            for(var i=start; res.length<end-1; i+=step){
+                res.push(i);
+            }
+            return res;
+        }
+        if(end>0){
+            for(var i=start; i<end; i+=step){
+                res.push(i);
+            }
+            return res;
+        }else if(end<0){
+            if(step<0){
+                for(var i=start; i>end; i+=step){
+                    res.push(i);
+                }
+                return res;
+            }else{
+                for(var i=start; i>end; i-=step){
+                    res.push(i);
+                }
+                return res;
+            }
+        }
     },
     
-    words:function(){
-
-    },
-    
-    range:function(){
-
-    },
-    
-    keyBy:function(array,name){
-        
+    keyBy:function(array,key){
+        if(typeof key == 'string'){
+            return array.reduce((val,item)=>{
+                val[item[key]]=item;
+                return val;
+            },{});
+        }else if(typeof key == 'function'){
+            return array.reduce((val,item)=>{
+                val[key(item)]=item;
+                return val;
+            },{});
+        }
     }
 
 
