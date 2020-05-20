@@ -1,5 +1,12 @@
+/*
+ * @Description: lodash库
+ * @Author: huacong
+ * @Date: 2020-04-28 17:15:31
+ * @LastEditTime: 2020-05-20 11:26:58
+ * @LastEditors: Please set LastEditors
+ */ 
 var ln2365539311 = {
-
+    
     isNaN:function(val){
         if(val!=val && Number.isNaN(val)){
             return true;
@@ -47,6 +54,11 @@ var ln2365539311 = {
         return res;
     },
     
+    /**
+     * 对比给定数组，返回给定数组中不被包含在对比数组中的元素
+     * @param {Array} arr 给定数组
+     * @param  {...Array} args 对比数组
+     */
     difference:function(arr,...args){
         // var t = [];
         // args.forEach(function(val){
@@ -60,11 +72,48 @@ var ln2365539311 = {
         });
     },
 
-    drop:function(arr,n=1){
+    /**
+     * 
+     * @param {Array} array 需要被对比的数组
+     * @param  {...Array} args 要排除的值
+     * @param {Function} fun 根据这个函数按照对应的函数进行排除
+     */
+    differenceBy:function(array,...args){
+        // 最后一个参数
+        var lastArg = args.pop();
+        var lastArgType = this.judgeType(lastArg);
+        if(lastArgType=="String" || lastArgType=="Array"){
+            return this.difference(array,args.slice(0,args.length-1))[0];
+        }else if(lastArgType=="Function"){
+            var valueArr = args.slice(0,args.length).flat();
+            valueArr = valueArr.map(val=>val=lastArg(val));
+            var res = [];
+            array.forEach((val)=>{
+                if(!valueArr.includes(lastArg(val))){
+                    res.push(val);
+                }
+            });
+            return res;
+        }
+    },
+
+    /**
+     * @description: 
+     * @param : 
+     * @return: 
+     */
+    drop:function(arr,n = 1){
         return arr.slice(n);
     },
 
-    fill:function fill(arr,val,start=0,end=arr.slice().length){
+    /**
+     * 
+     * @param {*} arr 
+     * @param {*} val 
+     * @param {*} start 
+     * @param {*} end 
+     */
+    fill:function(arr,val,start=0,end=arr.slice().length){
         while(start<end){
             arr.splice(start,1,val);
             start++;
@@ -72,6 +121,11 @@ var ln2365539311 = {
         return arr;
     },
     
+    /**
+     * @description: 
+     * @param {type} 
+     * @return: 
+     */
     findIndex:function(array, predicate, fromIndex = 0){
         if(!array) return -1;
         for(var key=fromIndex; key<array.length; key++){
@@ -109,7 +163,7 @@ var ln2365539311 = {
         // 如果 type 是函数类型
         return Object.prototype.toString.call(predicate).slice(8,-1);
     },
-
+    
     head:function(array){
         if(array)
             return array[0];
@@ -120,6 +174,12 @@ var ln2365539311 = {
             return arr.flat();
     },
 
+    /**
+     * 
+     * @param {*} arr 
+     * @param {*} val 
+     * @param {*} fromIndex 
+     */
     indexOf:function(arr,val,fromIndex=0){
         for(var i=fromIndex; i<arr.length; i++){
             if(Number.isNaN(val) && Number.isNaN(arr[i])){
@@ -581,7 +641,7 @@ var ln2365539311 = {
         return res;
     },
     
-    defaults:function(...objs){  // 后面的会把前面的覆盖
+    defaults:function(target,...objs){  // 后面的会把前面的覆盖
         var obj = objs.flat();
         for(let sourceObj of obj){
             console.log(sourceObj);  // 对象
@@ -600,7 +660,7 @@ var ln2365539311 = {
      * @param {Array|String} path 路径
      * @param {*} defaultValue 默认值
      */
-    get:function(object,path,defaultValue){
+    /*get:function(object,path,defaultValue){
         if(typeof path == "string"){
             var arr = path.split('.');
             var str = 'object';
@@ -626,7 +686,24 @@ var ln2365539311 = {
             s=s.substring(0,s.length-1);
             return eval('object.'+s);
         }
-    },  
+    },  */
+    get: function(object, path, defaultValue) {
+        if (path.length == 0) return object
+        var p = null
+        if (typeof path == 'string') {
+            // 'a[0].b.c'
+            // ".a[0].b.c".split(/[^\w]+/) -> ['', 'a', '0', 'b', 'c'] 注意首位会有个''
+            p = path.split(/[^\w]+/g)
+        }
+
+        if (!p) p = Array.from(path)
+        var ret = object
+        while (ret !== undefined && p.length > 0) {
+            ret = ret[p.shift()]
+        } 
+        if (ret === undefined) return defaultValue
+        else return ret
+    },
     
     // 检验属性是否存在的递归函数,没有的话递归创建
 
@@ -918,7 +995,7 @@ var ln2365539311 = {
         var res = string;
 		var charArr = chars.split('');
 		for(var i=0; i<charArr.length; i++){
-			var reg = new RegExp(charArr[i],"g");
+			var reg = new RegExp('\\'+charArr[i],"g");
 			res=res.replace(reg,'');
 		}
         return res;
