@@ -460,7 +460,7 @@ var ln2365539311 = {
     /*
         function fattenDepth2(arr,depth=1){
             return Array(depth).fill(0).reduce((val)=>{
-                debugger;
+                // debugger;
                 console.log(arr);
                 return flatten(arr);
             },arr);
