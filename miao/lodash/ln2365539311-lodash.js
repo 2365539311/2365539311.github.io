@@ -458,13 +458,13 @@ var ln2365539311 = {
     },
 
     /*
-        function fattenDepth(arr,depth=1){
+        function fattenDepth2(arr,depth=1){
             return Array(depth).fill(0).reduce((val)=>{
                 debugger;
                 console.log(arr);
                 return flatten(arr);
             },arr);
-        }
+        },
     */
     
     /**
@@ -1601,8 +1601,9 @@ var ln2365539311 = {
     //===========================================  Function  Model  =>   函数模块 ===========================================
 
     bind:function(f,obj,...fixedArgs){
+        var newObj=obj;
         // 双指针实现
-        return function(obj,...args){  // [7,8,9]
+        return function(newObj,...args){  // [7,8,9]
 			// 简单来讲就是把args的参数补充到null的地方去
 			var arr = fixedArgs.slice();
 			for(var i=0,j=0; i<arr.length; i++){
@@ -1615,7 +1616,7 @@ var ln2365539311 = {
 			while(j<args.length){
 				arr.push(args[j++]);
 			}
-			return f(this.obj,...arr);
+			return f.call(obj,...arr);
 		}
     },
 
