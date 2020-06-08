@@ -7,6 +7,9 @@
  */ 
 var ln2365539311 = {
     
+    // 
+
+
     isNaN:function(val){
         if(val!=val && Number.isNaN(val)){
             return true;
@@ -22,6 +25,12 @@ var ln2365539311 = {
     },
 
 
+    /**
+     * 根据传入的size值将给定数组切分
+     * @param {Array} arr 入参数组
+     * @param {切分成多少个子数组} size 多少个子数组
+     * @returns {返回切分后的数组}
+     */
     chunk:function(arr,size=1){
         if(arr.length==0) return arr;
         var res = [];
@@ -39,11 +48,18 @@ var ln2365539311 = {
         return res;
     },
 
+    /**
+     * 移除数组中false的元素
+     * @param {Array} arr 
+     */
     compact:function(arr){
         return arr.filter(x=>x);
     },
 
-
+    /**
+     * 连接数组
+     * @param  {...any} args 
+     */
     concat:function(...args){
         var index=1;
         var res = args[0];
@@ -60,16 +76,16 @@ var ln2365539311 = {
      * @param  {...Array} args 对比数组
      */
     difference:function(arr,...args){
-        // var t = [];
-        // args.forEach(function(val){
-        //     return t=t.concat(val);
-        // });
-        // return arr.filter(val=>!t.includes(val));
-        return arr.filter((val)=>{
-            return !args.some((val2)=>{
-                return val2.includes(val);
-            });
+        var t = [];
+        args.forEach(function(val){
+            return t=t.concat(val);
         });
+        return arr.filter(val=>!t.includes(val));
+        // return arr.filter((val)=>{
+        //     return !args.some((val2)=>{
+        //         return val2.includes(val);
+        //     });
+        // });
     },
 
     /**
@@ -95,25 +111,52 @@ var ln2365539311 = {
             });
             return res;
         }
+
+        /*
+            let isFunc = true;
+            let f = values[values.length - 1];
+            const res = [];
+            const v = [];
+            if (Array.isArray(f)) {
+                // iteratee = _.identity;
+                return this.difference(array, ...values);
+            } else if (!(typeof f === "function")) {
+                isFunc = false;
+            }
+
+            for (let value of values.slice(0, values.length - 1)) {
+                for (let i of value) {
+                    v.push(isFunc ? f(i) : i[f]);
+                }
+            }
+
+            for (let item of array) {
+                let temp = isFunc ? f(item) : item[f];
+                if (!v.includes(temp)) res.push(item);
+            }
+
+            return res;
+        */
     },
 
     /**
-     * @description: 
-     * @param : 
-     * @return: 
+     * 用传入的函数进行对比
+     * @param {*Array} array 需要被对比的数组
+     * @param  {...Array} args args最后一个参数可能为比较器
+     * @param {*func} 比较函数
      */
-    drop:function(arr,n = 1){
-        return arr.slice(n);
+    differenceWith:function(array,args,func){
+        var newFun = this.negate(func);
+        var res;
+        args.forEach(valArg=>{
+            res=array.filter(valAry=>newFun(valArg,valAry));  
+        });
+        return res;
     },
 
-    /**
-     * 
-     * @param {*} arr 
-     * @param {*} val 
-     * @param {*} start 
-     * @param {*} end 
-     */
-    fill:function(arr,val,start=0,end=arr.slice().length){
+    
+
+    fill:function(arr,val,start = 0,end=arr.slice().length){
         while(start<end){
             arr.splice(start,1,val);
             start++;
@@ -164,14 +207,287 @@ var ln2365539311 = {
         return Object.prototype.toString.call(predicate).slice(8,-1);
     },
     
+    findLastIndex:function(array,predicate,fromIndex=array.length-1){
+        if(!array) return -1;
+        for(var key=fromIndex; key>=0; key--){
+            // predicate 是需要寻找的值 在数组中找到其索引
+            if(this.judgeType(predicate) == "Function"){ // 是函数
+                if(predicate(array[key])){
+                    return key;
+                }
+            }else if(this.judgeType(predicate) == "Array"){  //  是数组
+                for(var i=0; i<predicate.length; i++){
+                    if(Object.entries(array[key]).flat().includes(predicate[i])){    
+                        if(i==predicate.length-1){
+                            return key;
+                        }
+                    }
+                }
+            }else if(this.judgeType(predicate) == "Object"){     // 是对象
+                var flag = true;
+                for(var h in array[key]){
+                    if(array[key][h] !== predicate[h]){  // 需要 把 对象中所有的 属性都走完
+                        flag = false;
+                    }
+                }
+                if(flag) return key;
+            }else if(this.judgeType(predicate) == "String"){     // 是字符串
+                if(array[key][predicate]){
+                    return key;
+                }
+            }
+        }
+        return -1;
+    },
+
+    // 抽象循环
+    // forFun:function(f){
+    //     return funtion(){
+
+    //     }
+    // },
+
+    /**
+     * 看obj2是否是obj1的自集
+     * @param {Object} obj1 原本的对象
+     * @param {Object} obj2 被对比的对下昂
+     * @returns {Boolean} res 返回真假
+     */
+    isSubSet:function(obj1,obj2){
+        var arr1=Object.keys(obj1);
+        var arr2=Object.keys(obj2);
+        var val1=Object.values(obj1);
+        var val2=Object.values(obj2);
+        // 看 arr1 中是否包含 arr2 中的全部
+        var flag1=true;
+        arr2.forEach(val=>{
+            if(!arr1.includes(val)){
+                // 如果有一次 是 false 就表明已经有元素不存在了 跳出
+                flag1=!flag1;
+                return;
+            }
+        })
+        var flag2=true;
+        // 如果 flag1 仍为真 则表示 arr1 中包含全部 arr2
+        if(flag1){
+            val2.forEach(val=>{
+                if(!val1.includes(val)){
+                    flag2=!flag2;
+                    return; 
+                }
+            })
+        }
+        if(flag1 && flag2){
+            return true;
+        }
+        return false;;
+    },
+
+    /**
+     * 找到集合中第一个符合条件的元素
+     * @param {Array|Object} collection 
+     * @param {Function} predicate 
+     * @param {Number} fromIndex 
+     * @returns {*} Returns the matched element, else undefined.
+     */
+    find:function(collection,predicate,fromIndex = 0){
+        if(this.judgeType(predicate)=="String"){
+            for(var key in collection){
+                if(collection[key]){
+                    return collection[key];
+                }
+            }
+        }else if(this.judgeType(predicate)=="Object"){
+            // 是对象就对比两个对象
+            for(var key in target){
+                if(target[key]!=predicate[key]){
+                    return false;
+                }
+            }
+            return true;
+        }else if(this.judgeType(predicate)=="Array"){  // 把数组转为对象之后然后保留属性为真的那个
+            // 把 predicate 数组转为对象 然后两个进行对比
+            predicate=this.fromPairsOneDemension(predicate);
+            // 判断predicate是否在 ary 中
+            for(var i=fromIndex; i<ary.length; i++){
+                if(this.isSubSet(predicate)){
+                    return ary[i];
+                }
+            }
+        }else if(this.judgeType(predicate)=="Function"){
+            for(var key in collection){
+                if(predicate(collection[key])){
+                    return collection[key];
+                }
+            }
+        }
+        return undefined;
+    },
+
+    drop:function(arr,ny = 1){
+        return arr.slice(ny);
+    },
+
+    dropRight:function(array,n=1){
+        if(n>=array.length){
+            return [];
+        }
+        if(n==0){
+            return array.slice();
+        }
+        /*
+        array=array.reverse();
+        return array.slice(n).reverse();
+        */
+       var res=[];
+       for(var i=0;i<=(array.length-1-n); i++){
+           res.push(array[i]);
+       }
+       return res;
+    },
+
+    dropRightWhile:function(array,predicate){
+        predicate=this.typeConvert(predicate);
+        return array.filter((val,idx,arr)=>{
+            return !predicate(val,idx,arr);
+        });
+    },
+
+    /**
+     * 类型转换的函数，最后将返回一个函数
+     * @param {Array|String|Object|Function} predicate 不同类型的入参
+     */
+    typeConvert:function(predicate){
+        if(this.judgeType(predicate)=="String"){
+            return function(obj){
+                return obj[predicate]!='undefined'?false:true;
+            }
+        }else if(this.judgeType(predicate)=="Object"){
+            // 是对象就对比两个对象
+            return function(target){
+                for(var key in target){
+                    if(target[key]!=predicate[key]){
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }else if(this.judgeType(predicate)=="Array"){  // 把数组转为对象之后然后保留属性为真的那个
+            return function(ary){
+                // 把 predicate 数组转为对象 然后两个进行对比
+                var predicateRes=ln2365539311.fromPairsOneDemension(predicate);  //  这里用 bind 来实现
+                // 判断predicate是否在 ary 中
+                var res=ln2365539311.isSubSet(ary,predicateRes);
+                return res;
+            }
+        }
+        return predicate;
+    },
+
+    dropWhile:function(array,predicate){
+        predicate=this.typeConvert(predicate);
+        return array.filter((val,idx,arr)=>{
+            return !predicate(val,idx,arr);
+        });
+    },
+
     head:function(array){
         if(array)
             return array[0];
     },
 
-    flatten:function(arr){
+    flatten:function(arr){  //  只展平一阶
+        /*
         if(arr)
             return arr.flat();
+        */
+
+        /*
+            return [].concat(...arr);
+        */
+
+        var res = [];
+        for(var item of arr){
+            if(Array.isArray(item)){
+                res.push(...item);
+            }else{
+                res.push(item);
+            }
+        }
+        return res;
+    },
+
+    // 递归降维
+    // flattenDeep:function(arr,res=[]){
+    //     arr.forEach(val=>{
+    //         if(Array.isArray(val)){
+    //             flattenDeep(val,res);
+    //         }else{
+    //             res.push(val);
+    //         }
+    //     })
+    //     return res;
+    // },
+    flattenDeep:function(arr){
+        var res = [];
+        arr.forEach(val=>{
+            if(Array.isArray(val)){
+                var flatArr = flattenDeep(val);
+                res.push(...flatArr);
+            }else{
+                res.push(val);
+            }
+        })
+        return res;
+    },
+
+    flattenDepth:function(arr,depth=1){
+        var res = [];
+        if(depth==0){
+            return arr.slice();
+        }
+        arr.forEach(val=>{
+            if(Array.isArray(val)){
+                var flatArr = flattenDepth(val,depth-1);
+                res.push(...flatArr);
+            }else{
+                res.push(val);
+            }
+        })
+        return res;
+    },
+
+    /*
+        function fattenDepth(arr,depth=1){
+            return Array(depth).fill(0).reduce((val)=>{
+                debugger;
+                console.log(arr);
+                return flatten(arr);
+            },arr);
+        }
+    */
+    
+    /**
+     * 将数组以 key-values 的对象形式返回
+     * @param {Array} ary 二维数组
+     * @returns {Object} 返回一组对象
+     */
+    fromPairs:function(ary){
+        var obj = {};
+        for(var key of ary){
+            obj[key[0]]=key[1];
+        }
+        return obj;
+    },
+
+    /**
+     * 
+     * @param {Array} ary 一维数组
+     */
+    fromPairsOneDemension(ary){
+        var res = {};
+        res[ary[0]]=ary[1];
+        return res;
     },
 
     /**
@@ -180,7 +496,7 @@ var ln2365539311 = {
      * @param {*} val 
      * @param {*} fromIndex 
      */
-    indexOf:function(arr,val,fromIndex=0){
+    indexOf:function(arr,val,fromIndex = 0){
         for(var i=fromIndex; i<arr.length; i++){
             if(Number.isNaN(val) && Number.isNaN(arr[i])){
                 return i;
@@ -298,6 +614,11 @@ var ln2365539311 = {
     },
 
     
+    sortBy:function(){
+
+    },
+
+
     sortedIndex:function(arr,val){
         var left = 0;
         var right = arr.length;
@@ -419,6 +740,66 @@ var ln2365539311 = {
         return obj;
     },
 
+    zipObjectDeep:function(){
+
+    },
+
+    zipWith:function(){
+
+    },
+
+
+
+    //  Collection Model   =>   集合模块
+
+    mapValues:function(obj,mapper){  // 对应 objectValues
+		var res = {};
+		for(var key in obj){
+			var val=obj[key];
+			res[key]=mapper(val,key,obj);
+		}
+		return res;
+	},
+
+    countBy:function(){
+
+    },
+
+    every:function(arr,predicate){
+        return arr.reduce((acm,value,idx,arr)=>{
+            return acm && predicate(value,idx,arr);
+        },true);
+
+        /*
+        for(var i=0; i<arr.length; i++){
+            if(!predicate(arr[i])){
+                return false;
+            }
+        }
+        return true;
+        */
+    },
+
+    filter:function(){
+        var test=predicate
+		if(typeof predicate == 'string'){
+			test=it=>it[test];
+		}else if(typeof predicate == 'object'){
+			if(Array.isArray(predicate)){
+				predicate=this.fromPairs(predicate);
+			}
+			test=it=>{
+				for(var key in predicate){ 
+					if(predicate[key] !== it[key]){
+						return false;
+					}
+				}
+				return true;
+			}
+		}
+    },
+
+
     /**
      * 创建一个排除给定值的数组
      * @param {Array} arr 数组
@@ -451,6 +832,36 @@ var ln2365539311 = {
         return r;
     },
     
+    groupBy: function (arr, predicate) {
+        /*
+        var res = {};
+        for (var i = 0; i < arr.length; i++) {
+            var groupKey = predicate(arr[i], i, arr);
+            if (groupKey in res) {
+                res[groupKey].push(arr[i]);
+            } else {
+                res[groupKey] = [arr[i]];
+            }
+        }
+        return res;
+        */
+        var res={};
+        // 将by转换为函数
+        var f=by;
+        if(typeof by == "string"){
+            f=item=>item[by];
+        }
+        ary.forEach(val=>{
+            var key=f(val);
+            if(key in res){
+                res[key].push(val);
+            }else{
+                res[key]=[val];
+            }
+        });
+        return res;
+    },
+
     /**
      * 返回true或false
      * @param {Object、Array、String} collection 集合：对象、数组或字符串
@@ -549,6 +960,29 @@ var ln2365539311 = {
         return this.eq(value, other) || this.gt(value, other)
     },
     
+    isArguments:function(value){
+        var res = this.judgeType(value);
+        if(res=='Object' && Object.entries().length!=0){
+            return true;
+        }
+        return false;
+    },
+
+    isArray:function(arr) {
+        if (Array.isArray(arr)) {
+            return true
+        }
+        return false
+    },
+
+    isBoolean:function(value){
+        return this.judgeType(value)=='Boolean';
+    },
+
+    isDate:function(value){
+        return this.judgeType(value)=='Date';
+    },
+
     lt:function(value, other){
         return value < other
     },
@@ -707,6 +1141,7 @@ var ln2365539311 = {
     
     // 检验属性是否存在的递归函数,没有的话递归创建
 
+    
     /**
      * 设置对象路径的值。如果路径的一部分不存在，则会创建它。 为缺少的索引属性创建数组，而为所有其他缺少的属性创建对象。 使用_.setWith自定义路径创建。
      * @param {Object} object 入参对象
@@ -821,6 +1256,15 @@ var ln2365539311 = {
         return Object.keys(object);
     },
     
+
+    mapKeys:function(){
+
+    },
+
+    mapValues:function(){
+        
+    },
+
     assign:function(object, ...sources){
         return Object.assign(object,...sources);
     },
@@ -991,11 +1435,11 @@ var ln2365539311 = {
     },
     
     
-    trim:function(string='',chars=' '){
+    trim:function(string='',chars='\\s'){
         var res = string;
 		var charArr = chars.split('');
 		for(var i=0; i<charArr.length; i++){
-			var reg = new RegExp('\\'+charArr[i],"g");
+			var reg = new RegExp(`[${chars}]`,"g");   //   // ${变量}  就相当于 取到 大括号内 该变量的值
 			res=res.replace(reg,'');
 		}
         return res;
@@ -1017,7 +1461,32 @@ var ln2365539311 = {
     },
     
     truncate:function(string='',options={}){
-
+        var obj = {
+            length:30,
+            omission:"...",
+            separator:""
+        };
+        // 通过obj里面的属性依次对字符串进行操作
+        var newObj=Object.assign(obj,options);  // 源对象,目标对象
+        var reg = new RegExp(newObj.separator,"g");
+        var match;
+        var res='';
+        var lastIndex=0;
+        // 如果字符串能够一直匹配到东西就一直循环
+        while(match=reg.exec(string)){
+            console.log(match.index);
+            res+=string.slice(lastIndex,match.index);
+            if(reg.lastIndex==(newObj.length-newObj.omission.length)){
+                break;
+            }
+            lastIndex=reg.lastIndex;
+            if(match[0]==''){
+                reg.lastIndex=reg.lastIndex+1;
+            }
+        }
+        res+=newObj.omission;
+        // 把剩余的部分加上
+        return res;
     },
     
     unescape:function(string=''){
@@ -1110,7 +1579,156 @@ var ln2365539311 = {
                 return val;
             },{});
         }
-    }
+    },
 
+
+    /**
+     * 通过迭代函数 对传入的集合进行转换
+     * @param {Array|Object} collection 集合
+     * @param {迭代器} iteratee 迭代函数
+     * @param {Array} 返回一个新数组
+     */
+    map:function(collection,predicate){   //  可以 调用 _.iteratee 
+        var res=[];
+        iteratee=this.iteratee(predicate);
+        for(var key in collection){
+            res.push(this.iteratee(collection[key]));
+        }
+        return res;
+    },
+
+
+    //===========================================  Function  Model  =>   函数模块 ===========================================
+
+    bind:function(f,obj,...fixedArgs){
+        // 双指针实现
+        return function(obj,...args){  // [7,8,9]
+			// 简单来讲就是把args的参数补充到null的地方去
+			var arr = fixedArgs.slice();
+			for(var i=0,j=0; i<arr.length; i++){
+				if(arr[i]==null){
+					arr[i]=args[j];
+					j++;
+				}
+			}
+			// 如果 下面要赛入的数据没传完
+			while(j<args.length){
+				arr.push(args[j++]);
+			}
+			return f(this.obj,...arr);
+		}
+    },
+
+    /**
+     * 对函数取反
+     * @param {Function} f 入参函数
+     */
+    negate:function(f){
+        return function(...args){
+            return !f(...args);
+        }
+    },
+    
+    flip:function(func){
+        return function(...args){
+            return func(...args.reverse());
+        }
+    },
+
+
+    before:function(n,func){
+		var times = 0;
+		var lastCall;
+		return function(...args){
+			times++;
+			if(times<n){
+				return lastCall = func(...args);
+			}else{
+				return lastCall;
+			}
+		}
+	},
+
+
+	after:function(n,func){
+		var times = 0;
+		return function(...args){
+			times++;
+			if(times<n){
+				// do nothing
+				return;
+			}else{
+				return func(...args);
+			}
+		}
+	},
+
+    ary:function(func,n=f.length){
+		return function(...args){
+			return func(...args.slice(0,n));
+		}
+	},
+
+	unary:function(func){
+		return this.ary(func,1);
+    },
+    
+    spread:function(func){
+		return function(...args){
+			return func(...args);
+		}
+    },
+    
+    memoize:function(func){  // 创建一个函数 能记住 调用 func 函数的结果
+		var memo  = {};
+		return function(args){
+			if(args in memo){
+				return memo[args]
+			}else{
+				return memo[args]=func(args);
+			}
+		}
+	},
+
+    reject:function(ary,test){
+		return this.filter(ary,this.negate(test));
+	},
+
+    //================================================ Util Model  =>    工具模块 ===========================================
+    iteratee:function(predicate){
+        var type=this.judgeType(predicate);
+        // 如果是对象的话 直接返回 其值
+        if(type=="String"){
+            return this.propety(predicate);
+        }else if(type=="Array"){
+            return this.match(predicate);
+        }else if(type=="Object"){
+            return this.matchPrpoerty(predicate);
+        }
+        return predicate;
+    },
+
+    property:function(predicate){
+        return function(obj){
+            return obj[predicate];
+        }
+    },
+
+    match:function(target){  // 匹配两个对象是否相等
+        return function(obj){
+            for(var key of obj){
+                if(obj[key]!=target[key]){
+                    return false;
+                }
+            }
+            return true;
+        }
+    },
+
+    matchPrpoerty:function(ary){
+        return this.match(this.fromPairs(this.chunk(ary)));
+    },
+
+    // 用 bind 绑定一下函数试试
 
 }
