@@ -455,18 +455,14 @@ var ln2365539311 = {
             }
         })
         return res;
-    },
 
-    /*
-        function fattenDepth2(arr,depth=1){
+        /*
             return Array(depth).fill(0).reduce((val)=>{
-                // debugger;
-                console.log(arr);
                 return flatten(arr);
             },arr);
-        },
-    */
-    
+        */ 
+    },
+
     /**
      * 将数组以 key-values 的对象形式返回
      * @param {Array} ary 二维数组
@@ -750,7 +746,21 @@ var ln2365539311 = {
 
 
 
-    //  Collection Model   =>   集合模块
+    //========================================== Collection Model   =>   集合模块 =========================================
+
+    /**
+     * 此方法创建一个具有与object和key相同值的对象，该对象和key是通过iteratee运行对象自己的每个可枚举的字符串键属性而生成的
+     * @param {Object} obj 
+     * @param {Function} predicate 
+     */
+    mapKeys:function(obj,predicate){
+        var res = {};
+		for(var key in obj){
+			var val=obj[key];
+			predicate(val,key,obj)=res[key];
+		}
+		return res;
+    },
 
     mapValues:function(obj,mapper){  // 对应 objectValues
 		var res = {};
@@ -1601,9 +1611,9 @@ var ln2365539311 = {
     //===========================================  Function  Model  =>   函数模块 ===========================================
 
     bind:function(f,obj,...fixedArgs){
-        var newObj=obj;
         // 双指针实现
         return function(newObj,...args){  // [7,8,9]
+            newObj=obj;
 			// 简单来讲就是把args的参数补充到null的地方去
 			var arr = fixedArgs.slice();
 			for(var i=0,j=0; i<arr.length; i++){
@@ -1616,7 +1626,7 @@ var ln2365539311 = {
 			while(j<args.length){
 				arr.push(args[j++]);
 			}
-			return f.call(obj,...arr);
+			return f.call(newObj,...arr);
 		}
     },
 
