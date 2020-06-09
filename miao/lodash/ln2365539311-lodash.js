@@ -757,7 +757,7 @@ var ln2365539311 = {
         var res = {};
 		for(var key in obj){
 			var val=obj[key];
-			predicate(val,key,obj)=res[key];
+			res[predicate(val,key,obj)]=val;
 		}
 		return res;
     },
