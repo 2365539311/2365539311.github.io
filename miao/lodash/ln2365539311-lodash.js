@@ -18,6 +18,14 @@ var ln2365539311 = {
         }else{
             return false;
         }
+            // if (v === undefined || v.constructor.name !== "Number") return false;
+            // let n = Number(v);
+            // return n !== n;
+
+            // if (typeof val === "object") {
+            //     return val.__proto__.constructor === Number;
+            // }
+            // return val !== val;
     },
 
     isNull:function(val){
@@ -384,6 +392,34 @@ var ln2365539311 = {
         return predicate;
     },
 
+    // 转成带值的
+    typeConvertVal:function(predicate){
+        if(this.judgeType(predicate)=="String"){
+            return function(obj){
+                return obj[predicate];
+            }
+        }else if(this.judgeType(predicate)=="Object"){
+            // 是对象就对比两个对象
+            return function(target){
+                for(var key in target){
+                    if(target[key]!=predicate[key]){
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }else if(this.judgeType(predicate)=="Array"){  // 把数组转为对象之后然后保留属性为真的那个
+            return function(ary){
+                // 把 predicate 数组转为对象 然后两个进行对比
+                var predicateRes=ln2365539311.fromPairsOneDemension(predicate);  //  这里用 bind 来实现
+                // 判断predicate是否在 ary 中
+                var res=ln2365539311.isSubSet(ary,predicateRes);
+                return res;
+            }
+        }
+        return predicate;
+    },
+
     dropWhile:function(array,predicate){
         predicate=this.typeConvert(predicate);
         return array.filter((val,idx,arr)=>{
@@ -517,7 +553,47 @@ var ln2365539311 = {
         return res;
     },
 
-    join:function(arr,separator=','){
+    /**
+     * 通过函数的值来达到相交
+     * @param  {...Array} args 
+     * @param {Function} iteratee 
+     * @returns {Array} 返回一个相交的新数组
+     */
+    intersectionBy:function(...args){
+        var ary=Array.from(args);
+        var f=ary.slice(ary.length-1,ary.length)[0];
+        var filterArr=ary.slice(0,ary.length-1);
+        iteratee=this.typeConvert(f);
+        var res = filterArr[0];
+        var ret;
+        for(var i=1; i<filterArr.length; i++){
+            ret=res.filter(val=>{
+                return filterArr[i].map(val=>interseval=iteratee(val)).includes(iteratee(val));
+            });
+        }        
+        return ret;
+    },
+
+
+    intersectionWith:function(...args){  //  ...args
+        var ary=Array.from(args);
+        var f=ary.slice(ary.length-1,ary.length)[0];
+        var filterArr=ary.slice(0,ary.length-1);
+        iteratee=this.typeConvert(f);
+        // var flatArr = filterArr.flat();
+        var resArr=[];
+        for(let i=0; i<filterArr[0].length; i++){  // 取出来的是一维数组  filterArr[0] ->  [{}]   filterArr[1]  ->  [{}]
+            for(var j=1; j<filterArr[1].length; j++){
+                if(iteratee(filterArr[i],filterArr[j])){
+                    resArr.push(filterArr[i]);
+                }
+            }
+        }
+        return resArr;
+    },
+
+
+    join:function(arr,separator = ","){
         return arr.join(separator);
     },
 
@@ -555,6 +631,41 @@ var ln2365539311 = {
         return arr.filter((val)=>{
             return !arrDelete.includes(val);
         });
+    },
+
+    /**
+     * 
+     * @param {Array} array 需要被修改的数组
+     * @param {Array} values 要被删除的值
+     * @param {Function} iteratee 调用的函数
+     */
+    pullAllBy:function(array,values,iteratee){
+        iterator=this.typeConvertVal(iteratee);
+        // 把values中的对象映射成值
+        var valArr=values.map(valM=>iterator(valM));
+        var res = array.slice();
+        return res.filter((valF)=>{  //  val=>{}
+            var val=iterator(valF);
+            return !valArr.includes(val);
+        });
+    },
+
+    /**
+     * 
+     * @param {Array} array 被修改的元素
+     * @param {Array} values 要被移除的值
+     * @param {Function} compator 调用元素移除的值
+     */
+    pullAllWith:function(array,values,compator){
+        for(let kR in array){
+            for(let kV in values){
+                if(compator(array[kR],values[kV])){  // 需要被剔除
+                    array.splice(kR,1,array[kR]);
+                }
+            }
+
+        }
+        return array;
     },
 
     pullAt:function(arr,...arrIndex){
@@ -609,8 +720,14 @@ var ln2365539311 = {
         return res;
     },
 
-    
-    sortBy:function(){
+    /**
+     * 
+     * @param {Array|Object} collection 被迭带的集合
+     * @param {...(Function|Function[]} iteratees 迭代器顺序
+     */
+    sortBy:function(collection,iteratees){
+        iteratees=this.typeConvert(iteratees);
+        var res=[];
 
     },
 
@@ -629,6 +746,24 @@ var ln2365539311 = {
         return left!=0?left:-1;
     },
 
+    /**
+     * 返回values在数组中的下标
+     * @param {Array} array 需要被排序的数组
+     * @param {*} value 
+     * @param {Function} iteratee 
+     */
+    sortedIndexBy:function(array,value,iteratee){
+        var iterator=this.typeConvertVal(iteratee);
+        // 把 value 映射 成 数组的值
+        var valArr=iterator(value);
+        for(var key=0; key<array.length; key++){
+            var val=iterator(array[key]);
+            if(valArr==val){
+                return key;
+            }
+        }
+    },
+
     sortedIndexOf:function(arr,val){
         var left = 0;
         var right = arr.length;
@@ -641,6 +776,68 @@ var ln2365539311 = {
             }
         }
         return left!=0?left:-1;
+    },
+
+    sortedLastIndex:function(array,value){
+        for (var i = 0; i < array.length; i++) {
+            if (array[i] <= value && value < array[i + 1]) {
+                return i + 1
+            }
+        }
+    },
+
+    /**
+     * 最后出现的位置
+     * @param {Array} array 
+     * @param {*} value 
+     * @param {Function} iteratee 
+     */
+    sortedLastIndexBy:function(array,value,iteratee){
+        var iterator=this.typeConvertVal(iteratee);
+        // 把 value 映射 成 数组的值
+        var valArr=iterator(value);
+        for(var key=0; key<array.length; key++){
+            if (iterator(array[key]) <= valArr && valArr < iterator(array[key + 1])) {
+                return key + 1;
+            }
+        }
+    },
+
+    sortedLastIndexOf:function(array,value){
+        for(var i=array.length; i>=0; i--){
+            if(array[i]==value){
+                return i;
+            }
+        }
+        return -1;
+    },
+
+    // 去重
+    sortedUniq:function(array){
+        var obj = {};
+        for(var i=0; i<array.length; i++){
+            if(obj[array[i]]){
+                array.splice(array,1,array[i]); 
+            }else{
+                obj[array[i]]=1;
+            }
+        }
+        return array;
+    },
+
+    sortedUniqBy:function(array,iteratee){
+        // 把数组映射一下，然后调用上面的 sortedUniq去重即可
+        var iterator = this.typeConvertVal(iteratee);
+        var res=[];
+        var tmp=[];
+        // 只保留第一个
+        for(var i=0; i<array.length; i++){
+            if(!tmp.includes(iterator(array[i]))){
+                tmp.push(iterator(array[i]));
+                res.push(array[i]);
+            }
+        }
+        return res;
     },
 
     tail:function(arr){
@@ -656,6 +853,32 @@ var ln2365539311 = {
         return arr.slice(arr.length-n);
     },
     
+    takeRightWhile:function(array,predicate){
+        var iterator = this.typeConvertVal(predicate);
+        var res = [];
+        for(var i=array.length-1; i>=0; i--){
+            if(iterator(array[i])){
+                res.push(array[i]);
+            }else{
+                return res.reverse();
+            }
+        }
+        return res.reverse();
+    },
+
+    takeWhile:function(array,predicate){
+        var iterator = this.typeConvertVal(predicate);
+        var res = [];
+        for(var i=0; i<array.length; i++){
+            if(iterator(array[i])){
+                res.push(array[i]);
+            }else{
+                return res;
+            }
+        }
+        return res;
+    },
+
     /**
      * 从多个数组中返回一个没有重复元素的新数组
      * @param  {[Arrays]} args 多个数组
@@ -673,6 +896,66 @@ var ln2365539311 = {
     },
     
     /**
+     * 通过传入的参数转出对应的东西`
+     * @param  {...any} args 
+     */
+    unionBy:function(...args){   //  这个逻辑应该会是对的，如果不对去修改 equals
+        // 转成数组
+        var arr = Array.from(args);
+        // 拿到函数
+        var f = arr[arr.length-1];
+        var iterator=this.typeConvertVal(f);
+        // 剩下的数组
+        var restArr = arr.slice(0,arr.length-1);
+        var res = [restArr[0]];
+        // 先把res映射成一个想要的
+        // var tmp = res.map((val)=>iterator(val));
+        for(var i=1; i<restArr.length; i++){
+            if(iterator(res,restArr[i])){
+                res.push(restArr[i]);
+            }
+        }
+        return res;
+
+        /*
+        
+        for(let kR in array){
+            for(let kV in values){
+                if(compator(array[kR],values[kV])){  // 需要被剔除
+                    array.splice(kR,1,array[kR]);
+                }
+            }
+
+        }
+        return array;
+        
+        */
+    },
+
+
+    unionWith:function(...args){
+        // 转成数组
+        var arr = Array.from(args);
+        // 拿到函数
+        var f = arr[arr.length-1];
+        var iterator=this.typeConvertVal(f);
+        // 剩下的数组
+        var restArr = arr.slice(0,arr.length-1);  // 二维数组
+        var res = [];
+        var tmp = res.map((val)=>iterator(val));
+        for(var i=0; i<restArr.length; i++){
+            for(var j=0; j<restArr[i].length; j++){
+                var val=iterator(restArr[i][j]);
+                if(!tmp.includes(val)){
+                    res.push(restArr[i][j]);
+                }
+            }
+        }
+        return res;
+    },  
+
+
+    /**
      * 数组去重，且顺序不发生改变
      * @param {Array} arr 数组
      */
@@ -681,6 +964,35 @@ var ln2365539311 = {
         return Array.from(set);
     },
     
+    uniqBy:function(array,iteratee){  //  
+        var iterator = this.typeConvertVal(iteratee);
+        var res=[];
+        var tmp=[];
+        // 只保留第一个
+        for(var i=0; i<array.length; i++){
+            if(!tmp.includes(iterator(array[i]))){
+                tmp.push(iterator(array[i]));
+                res.push(array[i]);
+            }
+        }
+        return res;
+    },
+
+    /**
+     * 
+     * @param {Array} array 数组中包含着多个对象
+     * @param {Function} comparator 比较器
+     */
+    uniqWith:function(array,comparator){
+        var res=[array[0]];
+        for(var i=1; i<array.length; i++){
+            if(comparator(array[0],array[i])){  //  comparator(obj1,obj2)
+                res.push(array[i]);
+            }
+        }
+        return res;
+    },
+
     /**
      * 还原为原来的数组
      * @param {Array} array 二维数组  
@@ -698,6 +1010,104 @@ var ln2365539311 = {
         return res;
     },
 
+    unzipWith:function(array,iteratee){
+        // 遍历数组拿到最大长度
+        // var maxLen = Math.max(array.map(val=>val.length));
+        var iterator=this.typeConvertVal(iteratee);
+        var res=[];
+        for(var i=0; i<array.length-1; i++){
+            for(var j=0; j<array[i].length; j++){
+                var num=iterator(array[i][j],array[i+1][j]);
+                res.push(num);
+                continue;
+            }
+        }
+        return res;
+    },
+
+
+    without:function(array,...args){
+        var res=[];
+        var argArr = Array.from(args);
+        for(var val of argArr){
+            if(!array.includes(val)){
+                res.push(val);
+            }
+        }
+        return res;
+    },
+
+    /**
+     * 求各数组中的差集
+     * @param  {...Array} args 
+     */
+    xor:function(...args){
+        var argsArr = Array.from(args);
+        var res=[];
+        for(var val of argsArr){
+            if(!res.includes(val)){
+                res.push(val);
+            }
+        }
+        return res;
+    },
+
+    /**
+     * 把同样的元素去掉
+     * @param  {...Array} args 未知个数组 
+     * @param  {Function} 函数转换
+     * 
+     */
+    xorBy:function(...args){   
+        // 转成数组
+        var arr = Array.from(args);
+        // 拿到函数
+        var f = arr[arr.length-1];
+        var iterator=this.typeConvertVal(f);
+        // 剩下的数组
+        var restArr = arr.slice(0,arr.length-1);  // 二维数组
+        var res = restArr[0];
+        var tmp = restArr[0].map((val)=>iterator(val));
+        for(var i=1; i<restArr.length; i++){
+            for(var j=0; j<restArr[i].length; j++){
+                var val=iterator(restArr[i][j]);
+                if(!tmp.includes(val)){
+                    res.push(restArr[i][j]);
+                }else{  // 如果包括的话就需要把包括的删除
+                    var index = tmp.indexOf(val);  // 没有考虑NaN的情况
+                    res.splice(index,1);
+                }
+            }
+        }
+        return res;
+    },
+
+
+    xorWith:function(...args){
+        // 转成数组
+        var arr = Array.from(args);
+        // 拿到函数
+        var f = arr[arr.length-1];
+        var iterator=this.typeConvertVal(f);
+        // 剩下的数组
+        var restArr = arr.slice(0,arr.length-1);  // 二维数组
+        var res = [];
+        var tmp = res.map((val)=>iterator(val));
+        for(var i=0; i<restArr.length; i++){
+            for(var j=0; j<restArr[i].length; j++){
+                var val=iterator(restArr[i][j]);
+                if(!tmp.includes(val)){
+                    res.push(restArr[i][j]);
+                }
+            }
+        }
+        return res;
+        // if(!comparator(arr1,arr2)){
+        //     res.push();
+        // }
+    },
+
+
     /**
      * _.zip(['a', 'b'], [1, 2], [true, false]);
         // => [['a', 1, true], ['b', 2, false]]
@@ -709,7 +1119,6 @@ var ln2365539311 = {
         args.forEach((val)=>{
             maxLen = Math.max(maxLen,val.length);
         });
-        console.log("子数组最大长度为：",maxLen);
         for(var i=0; i<maxLen; i++){
             var tmp = [];
             for(var j=0; j<args.length; j++){
@@ -736,12 +1145,75 @@ var ln2365539311 = {
         return obj;
     },
 
-    zipObjectDeep:function(){
-
+    zipObjectDeep:function(props=[],values=[]){   //  【用对象的深拷贝】
+        var res={};
+        for(var i=0; i<props.length; i++){
+            var tmp=res;
+            var arr=props[i].split(/[^\w]+/g);
+            var valArr=arr[arr.length-1]!=undefined?arr[arr.length-1]:arr[arr.length-2];
+            // 遍历 arr 中 对象的属性
+            var j=0;
+            while(j<arr.length){
+                var p=arr[j];  //  数组中的各个元素 //  a b 0 等
+                if(tmp[p]){
+                    tmp=tmp[p];
+                }else{
+                    if(!isNaN(arr[j+1])){
+                         tmp[p]=[];
+                    }else{
+                        if(j==arr.length-1){
+                            break;
+                        }else{
+                            tmp[p]={};
+                        }
+                    }    
+                    // 最后把最后一次赋值的传给tmp
+                    tmp=tmp[p];
+                }
+                j++;
+            }
+            tmp[valArr]=values[i];
+        }
+        return res;
+        
+        /*
+        var res={};
+        for(let i=0; i<props.length; i++){
+            var tmp=res;
+            var arr=props[i].split(/[^\w]+/g);
+            // 遍历 arr 中 对象的属性
+            for(let j=0; j<arr.length-1; j++){
+                if(tmp[arr[j]]){
+                    tmp=tmp[arr[j]];
+                }else{
+                    if(!isNaN(arr[j+1])){
+                        tmp[arr[j]]=[];
+                    }else{
+                        tmp[arr[j]]={};
+                    }
+                    tmp=tmp[arr[j]];
+                }
+            }
+            tmp[arr[arr.length-1]]=values[i];
+        }
+        return res;
+        */    
     },
 
-    zipWith:function(){
-
+    zipWith:function(...args){
+        var arr=Array.from(args);
+        var f=this.typeConvert(arr.slice(arr.length-1)[0]);
+        arr=arr.slice(0,arr.length-1);
+        var tmp=this.zip(...arr);
+        var res=[];
+        tmp.forEach(subArr=>{
+            var num=0;
+            subArr.forEach(val=>{
+                num+=f(val,0,0);
+            });
+            res.push(num);
+        })
+        return res;
     },
 
 
@@ -771,8 +1243,29 @@ var ln2365539311 = {
 		return res;
 	},
 
-    countBy:function(){
-
+    /**
+     * 对数组或对象中每一项进行predicate求值，统计key的值有多少个
+     * @param {Array|Object} collection 
+     * @param {Function} predicate 
+     * @returns {Object} 
+     */
+    countBy:function(collection,predicate){
+        
+        var res={};
+        for(var key in collection){
+            var str = collection[key];
+            if(this.judgeType(predicate)=="String"){
+                var calVal=str[predicate];
+            }else{
+                var calVal=predicate(str);
+            }
+            if(res[calVal]){
+                res[calVal]++;
+            }else{
+                res[calVal]=1;
+            }
+        }
+        return res;
     },
 
     every:function(arr,predicate){
@@ -824,7 +1317,7 @@ var ln2365539311 = {
         args.forEach((valArr)=>{
             res=res.concat(valArr);
         });
-        console.log(res);
+        // console.log(res);
         var obj = {};
         res.forEach((val)=>{
             if(obj[val]){
@@ -992,6 +1485,30 @@ var ln2365539311 = {
     isDate:function(value){
         return this.judgeType(value)=='Date';
     },
+
+
+    // 需要多斟酌
+    isEqual:function(value,other){   //  深拷贝
+        if(typeof value=="object"){
+            if(Object.keys(value).length != Object.keys(other).length){
+                return false;
+            }
+            for(var key in value){
+                if(value[key]!=other[key]){
+                    return false;
+                }else if(typeof value[key]=="object"){  //  如果 键 仍然为 对象或其它 递归进行
+                    ln2365539311.isEqual(value[key]);
+                }
+            }
+        }else if(typeof value != typeof other){
+            return false;
+        }else if(value != other){
+            return false;
+        }
+        return true;
+    },
+    
+
 
     lt:function(value, other){
         return value < other
@@ -1607,12 +2124,22 @@ var ln2365539311 = {
         return res;
     },
 
+    /**
+     * 
+     * @param {Array|Object} collection 被迭代的集合
+     * @param {Array[] | Function[] | Object[] | String[]} iteratees 迭代的顺序  
+     * @param {Strings[]} orders  
+     */
+    orderBy:function(collection,iteratees,orders){
+
+    },
+
 
     //===========================================  Function  Model  =>   函数模块 ===========================================
 
     bind:function(f,obj,...fixedArgs){
         // 双指针实现
-        return function(newObj,...args){  // [7,8,9]
+        /*return function(newObj,...args){  // [7,8,9]
             newObj=obj;
 			// 简单来讲就是把args的参数补充到null的地方去
 			var arr = fixedArgs.slice();
@@ -1627,7 +2154,10 @@ var ln2365539311 = {
 				arr.push(args[j++]);
 			}
 			return f.call(newObj,...arr);
-		}
+        }*/
+        return function(...args){
+            return f.call(obj,...fixedArgs,...args);
+        }
     },
 
     /**
@@ -1705,12 +2235,24 @@ var ln2365539311 = {
 		return this.filter(ary,this.negate(test));
 	},
 
+
+    forOwn:function(obj,action){
+        var hasOwn=Object.prototype.hasOwnProperty;
+        for(var key in obj){
+            if(hasOwn.call(obj,key)){
+                action(key,map[obj],obj);
+            }
+        }
+        return obj
+    },
+
+
     //================================================ Util Model  =>    工具模块 ===========================================
     iteratee:function(predicate){
         var type=this.judgeType(predicate);
         // 如果是对象的话 直接返回 其值
         if(type=="String"){
-            return this.propety(predicate);
+            return this.property(predicate);
         }else if(type=="Array"){
             return this.match(predicate);
         }else if(type=="Object"){
