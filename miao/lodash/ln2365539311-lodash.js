@@ -97,54 +97,53 @@ var ln2365539311 = {
     },
 
     /**
-     * 
+     * 把后面集合中有第一个数组中的元素全部删除
      * @param {Array} array 需要被对比的数组
      * @param  {...Array} args 要排除的值
      * @param {Function} fun 根据这个函数按照对应的函数进行排除
      */
     differenceBy:function(array,...args){
-        // 最后一个参数
-        var lastArg = args.pop();
-        var lastArgType = this.judgeType(lastArg);
-        if(lastArgType=="String" || lastArgType=="Array"){
-            return this.difference(array,args.slice(0,args.length-1))[0];
-        }else if(lastArgType=="Function"){
-            var valueArr = args.slice(0,args.length).flat();
-            valueArr = valueArr.map(val=>val=lastArg(val));
-            var res = [];
-            array.forEach((val)=>{
-                if(!valueArr.includes(lastArg(val))){
-                    res.push(val);
-                }
-            });
-            return res;
+        
+        // 转成数组
+        args = Array.from(args);
+
+        // 如果没有 iteratee  只有数组
+        if(this.judgeType(args[args.length-1])=='Array'){
+            var propArr = args.slice();
+            return this.difference(array,...propArr);
         }
+    
+         // 后面的数组
+        var arr = args.slice(0,args.length-1);
 
-        /*
-            let isFunc = true;
-            let f = values[values.length - 1];
-            const res = [];
-            const v = [];
-            if (Array.isArray(f)) {
-                // iteratee = _.identity;
-                return this.difference(array, ...values);
-            } else if (!(typeof f === "function")) {
-                isFunc = false;
-            }
+        // 函数
+        var f = args.pop();
 
-            for (let value of values.slice(0, values.length - 1)) {
-                for (let i of value) {
-                    v.push(isFunc ? f(i) : i[f]);
+        // 转换后的 映射器
+        var iterator = this.typeConvertVal(f);
+
+        // 返回值
+        var res=array.slice();
+
+        // array 的映射数组
+        var mapArray = array.map((val)=>iterator(val));
+
+        // 从 mapArray 中删除对应的元素
+        for(var i=0; i<arr.length; i++){
+            for(var j=0; j<arr[i].length; j++){
+                var val=iterator(arr[i][j]);
+                // 如果映射数组中也包含 同样经过转换后的 val 则代表重复 ，跳过
+                if(mapArray.includes(val)){
+                    var index = mapArray.indexOf(val);
+                    res.splice(index,1);
+
+                    // 索引的问题
+                    mapArray=res.slice();
                 }
             }
+        }
+        return res;
 
-            for (let item of array) {
-                let temp = isFunc ? f(item) : item[f];
-                if (!v.includes(temp)) res.push(item);
-            }
-
-            return res;
-        */
     },
 
     /**
@@ -422,9 +421,14 @@ var ln2365539311 = {
 
     dropWhile:function(array,predicate){
         predicate=this.typeConvert(predicate);
-        return array.filter((val,idx,arr)=>{
-            return !predicate(val,idx,arr);
-        });
+        var res=array.slice();
+        for(var i=0; i<array.length; i++){
+            if(predicate(array[i])){
+                res.splice(array[i],1);
+            }else{
+                return res;
+            }
+        }
     },
 
     head:function(array){
@@ -579,13 +583,15 @@ var ln2365539311 = {
         var ary=Array.from(args);
         var f=ary.slice(ary.length-1,ary.length)[0];
         var filterArr=ary.slice(0,ary.length-1);
-        iteratee=this.typeConvert(f);
-        // var flatArr = filterArr.flat();
+        iterator=this.typeConvert(f);
+
+        //  一维数组 里面包含的是 需要被删除对象
+        var firstArr = filterArr[0];  
         var resArr=[];
-        for(let i=0; i<filterArr[0].length; i++){  // 取出来的是一维数组  filterArr[0] ->  [{}]   filterArr[1]  ->  [{}]
-            for(var j=1; j<filterArr[1].length; j++){
-                if(iteratee(filterArr[i],filterArr[j])){
-                    resArr.push(filterArr[i]);
+        for(var i=1; i<filterArr.length; i++){
+            for(var j=0; j<firstArr.length; j++){
+                if(iterator(firstArr[j],filterArr[i][j])){
+                    resArr.push(firstArr[j]);
                 }
             }
         }
@@ -817,7 +823,7 @@ var ln2365539311 = {
         var obj = {};
         for(var i=0; i<array.length; i++){
             if(obj[array[i]]){
-                array.splice(array,1,array[i]); 
+                array.splice(array,1); 
             }else{
                 obj[array[i]]=1;
             }
@@ -907,12 +913,15 @@ var ln2365539311 = {
         var iterator=this.typeConvertVal(f);
         // 剩下的数组
         var restArr = arr.slice(0,arr.length-1);
-        var res = [restArr[0]];
+        var res = restArr[0];
         // 先把res映射成一个想要的
-        // var tmp = res.map((val)=>iterator(val));
+        var tmp = res.map((val)=>iterator(val));
         for(var i=1; i<restArr.length; i++){
-            if(iterator(res,restArr[i])){
-                res.push(restArr[i]);
+            for(var j=0; j<restArr[i].length; j++){
+                var val = iterator(restArr[i][j]);
+                if(!tmp.includes(val)){
+                    res.push(restArr[i][j]);
+                }
             }
         }
         return res;
