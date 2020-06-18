@@ -306,18 +306,24 @@ var ln2365539311 = {
             }
         }else if(this.judgeType(predicate)=="Object"){
             // 是对象就对比两个对象
-            for(var key in collection){
-                if(collection[key]!=predicate[key]){
-                    return false;
+            for(var val of collection){
+                var flag=true;
+                for(var key in predicate){
+                    if(val[key]!==predicate[key]){
+                        flag=!flag;
+                        break;
+                    }
+                }
+                if(flag){
+                    return val;
                 }
             }
-            return true;
         }else if(this.judgeType(predicate)=="Array"){  // 把数组转为对象之后然后保留属性为真的那个
             // 把 predicate 数组转为对象 然后两个进行对比
             predicate=this.fromPairsOneDemension(predicate);
             // 判断predicate是否在 ary 中
             for(var i=fromIndex; i<collection.length; i++){
-                if(this.isSubSet(predicate)){
+                if(this.isSubSet(predicate,collection[i])){
                     return collection[i];
                 }
             }
@@ -329,6 +335,171 @@ var ln2365539311 = {
             }
         }
         return undefined;
+    },
+
+    /**
+     * 从右向左寻找元素
+     * @param {Array|Object} collection 
+     * @param {Function} predicate 
+     * @param {Number} fromIndex 
+     */
+    findLast:function(collection,predicate,fromIndex=collection.length-1){
+        // var keyArr = Object.keys(collection);
+        var predicator = this.typeConvert(predicate);
+        for(var i=fromIndex; i>=0; i--){
+            if(predicator(collection[i],i,collection)){
+                return collection[i];
+            }
+        }
+    },
+
+    flatMap:function(collection,iteratee){
+        var iterator=this.typeConvert(iteratee);
+        var res=[];
+        for(var key in collection){
+            res.push(iterator(collection[key],key,collection));
+        }
+        return res.flat();
+    },
+
+    flatMapDeep:function(collection,iteratee){
+        var iterator=this.typeConvert(iteratee);
+        var ret=[];
+        for(var key in collection){
+            ret.push(iterator(collection[key],key,collection));
+        }
+        return ln2365539311.flattenDeep(ret);
+    },
+
+    flatMapDepth:function(collection,iteratee,depth=1){
+        var iterator=this.typeConvert(iteratee);
+        var ret=[];
+        for(var key in collection){
+            ret.push(iterator(collection[key],key,collection));
+        }
+        return ln2365539311.flattenDepth(ret,depth);
+    },
+
+    forEach:function(collection,iteratee){
+        for(var key in collection){
+            var res= iteratee(collection[key],key,collection);
+            if(res==false){
+                break;
+            }
+        }
+        return collection;
+    },
+
+    forEachRight:function(collection,iteratee){
+        var keyArr = Object.keys(collection);
+        for(var i=keyArr.length-1; i>=0; i--){
+            var res= iteratee(collection[i],i,collection);
+            if(res==false){
+                break;
+            }
+        }
+        return collection;
+    },
+
+    // 分组
+    groupBy: function (ary, predicate) {
+        /*
+        var res = {};
+        for (var i = 0; i < arr.length; i++) {
+            var groupKey = predicate(arr[i], i, arr);
+            if (groupKey in res) {
+                res[groupKey].push(arr[i]);
+            } else {
+                res[groupKey] = [arr[i]];
+            }
+        }
+        return res;
+        */
+        var res={};
+        // 将by转换为函数
+        var f=predicate;
+        if(typeof predicate == "string"){
+            f=item=>item[predicate];
+        }
+        ary.forEach(val=>{
+            var key=f(val);
+            if(key in res){
+                res[key].push(val);
+            }else{
+                res[key]=[val];
+            }
+        });
+        return res;
+    },
+
+    /**
+     * 调用path（路径）上的方法处理 collection(集合)中的每个元素，返回一个数组，包含每次调用方法得到的结果。任何附加的参数提供给每个被调用的方法。如果methodName（方法名）是一个函数，每次调用函数时，内部的 this 指向集合中的每个元素。
+     * @param {Array|Object} collection 用来迭代的集合
+     * @param {Array|Funciton|String} path 用来调用方法的路径或者每次迭代调用的函数
+     * @param {...*} predicate 调用每个方法的参数
+     */
+    invokeMap:function(collection,path,...args){
+        let re = [];
+        if (typeof collection == "object") {
+            for (let key in collection) {
+                if (typeof path == "function") {
+                    let temp = path.call(collection[key], ...args);
+                    re.push(temp);
+                } else {
+                    let temp = this.judegFunByOnePara(path)(collection[key]).call(collection[key],...args);
+                    re.push(temp);
+                }
+            }
+        }
+        return re;
+    },
+
+    /**
+   *
+   * @param {Array|Function|Object|String} para 传入的元素
+   * @returns 根据传入的元素判断函数
+   */
+    judegFunByOnePara:function (para) {
+        let re = null;
+        if (typeof para == "object") {
+            if (Array.isArray(para)) {
+                para = this.matchesProperty(para);
+            }
+            re = this.matches(para);
+        } else if (typeof para == "function") {
+            re = para;
+        } else if (typeof para == "string") {
+            re = (it) => it[para];
+        }
+        return re;
+    },
+
+      /**
+   *
+   * @param {Array} arr 原始数组
+   * @returns 返回一个包含数组中信息的对象
+   */
+    matchesProperty: function (arr) {
+        let re = {};
+        for (let i = 0; i < arr.length; i++) {
+            re[arr[i++]] = arr[i];
+        }
+        return re;
+    },
+
+      /**
+   *
+   * @param {Object} obj 根据对象返回一个判断函数
+   */
+    matches: function (obj) {
+        return function (para) {
+            for (let prop in obj) {
+                if (para[prop] != obj[prop]) {
+                    return false;
+                }
+            }
+            return true;
+        };
     },
 
     drop:function(arr,ny = 1){
@@ -472,7 +643,7 @@ var ln2365539311 = {
         var res = [];
         arr.forEach(val=>{
             if(Array.isArray(val)){
-                var flatArr = flattenDeep(val);
+                var flatArr = ln2365539311.flattenDeep(val);
                 res.push(...flatArr);
             }else{
                 res.push(val);
@@ -488,7 +659,7 @@ var ln2365539311 = {
         }
         arr.forEach(val=>{
             if(Array.isArray(val)){
-                var flatArr = flattenDepth(val,depth-1);
+                var flatArr = ln2365539311.flattenDepth(val,depth-1);
                 res.push(...flatArr);
             }else{
                 res.push(val);
@@ -1299,7 +1470,7 @@ var ln2365539311 = {
             return function(obj){
                 return obj[predicate];
             }
-        }else if(this.judgeType(predicate)=="Object"){
+        }else if(this.judgeType(predicate)=="Object" || this.judgeType(predicate)=="RegExp"){
             // 是对象就对比两个对象
             return function(target){
                 for(var key in predicate){
@@ -1368,36 +1539,6 @@ var ln2365539311 = {
             }
         }
         return r;
-    },
-    
-    groupBy: function (arr, predicate) {
-        /*
-        var res = {};
-        for (var i = 0; i < arr.length; i++) {
-            var groupKey = predicate(arr[i], i, arr);
-            if (groupKey in res) {
-                res[groupKey].push(arr[i]);
-            } else {
-                res[groupKey] = [arr[i]];
-            }
-        }
-        return res;
-        */
-        var res={};
-        // 将by转换为函数
-        var f=by;
-        if(typeof by == "string"){
-            f=item=>item[by];
-        }
-        ary.forEach(val=>{
-            var key=f(val);
-            if(key in res){
-                res[key].push(val);
-            }else{
-                res[key]=[val];
-            }
-        });
-        return res;
     },
 
     /**
@@ -2152,9 +2293,9 @@ var ln2365539311 = {
      */
     map:function(collection,predicate){   //  可以 调用 _.iteratee 
         var res=[];
-        iteratee=this.iteratee(predicate);
+        iterator=this.typeConvertVal(predicate);
         for(var key in collection){
-            res.push(this.iteratee(collection[key]));
+            res.push(iterator(collection[key]));
         }
         return res;
     },
@@ -2166,7 +2307,7 @@ var ln2365539311 = {
      * @param {Strings[]} orders  
      */
     orderBy:function(collection,iteratees,orders){
-
+        
     },
 
 
