@@ -306,8 +306,8 @@ var ln2365539311 = {
             }
         }else if(this.judgeType(predicate)=="Object"){
             // 是对象就对比两个对象
-            for(var key in target){
-                if(target[key]!=predicate[key]){
+            for(var key in collection){
+                if(collection[key]!=predicate[key]){
                     return false;
                 }
             }
@@ -316,9 +316,9 @@ var ln2365539311 = {
             // 把 predicate 数组转为对象 然后两个进行对比
             predicate=this.fromPairsOneDemension(predicate);
             // 判断predicate是否在 ary 中
-            for(var i=fromIndex; i<ary.length; i++){
+            for(var i=fromIndex; i<collection.length; i++){
                 if(this.isSubSet(predicate)){
-                    return ary[i];
+                    return collection[i];
                 }
             }
         }else if(this.judgeType(predicate)=="Function"){
@@ -583,13 +583,13 @@ var ln2365539311 = {
         var ary=Array.from(args);
         var f=ary.slice(ary.length-1,ary.length)[0];
         var filterArr=ary.slice(0,ary.length-1);
-        iterator=this.typeConvert(f);
+        var iterator=this.typeConvert(f);
 
         //  一维数组 里面包含的是 需要被删除对象
         var firstArr = filterArr[0];  
         var resArr=[];
         for(var i=1; i<filterArr.length; i++){
-            for(var j=0; j<firstArr.length; j++){
+            for(var j=0; j<firstArr.length; j++){ 
                 if(iterator(firstArr[j],filterArr[i][j])){
                     resArr.push(firstArr[j]);
                 }
@@ -1278,6 +1278,7 @@ var ln2365539311 = {
     },
 
     every:function(arr,predicate){
+        predicate=this.typeConvert(predicate);
         return arr.reduce((acm,value,idx,arr)=>{
             return acm && predicate(value,idx,arr);
         },true);
@@ -1292,23 +1293,48 @@ var ln2365539311 = {
         */
     },
 
-    filter:function(){
-        var test=predicate
-		if(typeof predicate == 'string'){
-			test=it=>it[test];
-		}else if(typeof predicate == 'object'){
-			if(Array.isArray(predicate)){
-				predicate=this.fromPairs(predicate);
-			}
-			test=it=>{
-				for(var key in predicate){ 
-					if(predicate[key] !== it[key]){
-						return false;
-					}
-				}
-				return true;
-			}
-		}
+
+    typeConvertValForFilter:function(predicate){
+        if(this.judgeType(predicate)=="String"){
+            return function(obj){
+                return obj[predicate];
+            }
+        }else if(this.judgeType(predicate)=="Object"){
+            // 是对象就对比两个对象
+            return function(target){
+                for(var key in predicate){
+                    if(target[key]!=predicate[key]){
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }else if(this.judgeType(predicate)=="Array"){  // 把数组转为对象之后然后保留属性为真的那个
+            return function(ary){
+                // 把 predicate 数组转为对象 然后两个进行对比
+                var predicateRes=ln2365539311.fromPairsOneDemension(predicate);  //  这里用 bind 来实现
+                // 判断predicate是否在 ary 中
+                var res=ln2365539311.isSubSet(ary,predicateRes);
+                return res;
+            }
+        }
+        return predicate;
+    },
+
+    /**
+     * 返回集合中条件为真的元素
+     * @param {Array|Object} collection 
+     * @param {Function} predicate 
+     */
+    filter:function(collection,predicate){
+        var predicator = this.typeConvertValForFilter(predicate);
+        var res=[];
+        for(var key in collection){
+            if(predicator(collection[key])){
+                res.push(collection[key]);
+            }
+        }
+        return res;
     },
 
 
