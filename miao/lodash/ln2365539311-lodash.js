@@ -897,16 +897,7 @@ var ln2365539311 = {
         return res;
     },
 
-    /**
-     * 
-     * @param {Array|Object} collection 被迭带的集合
-     * @param {...(Function|Function[]} iteratees 迭代器顺序
-     */
-    sortBy:function(collection,iteratees){
-        iteratees=this.typeConvert(iteratees);
-        var res=[];
 
-    },
 
 
     sortedIndex:function(arr,val){
@@ -1488,6 +1479,8 @@ var ln2365539311 = {
                 var res=ln2365539311.isSubSet(ary,predicateRes);
                 return res;
             }
+        }else if(this.judgeType(predicate)=="Undefined"){
+            return predicate;
         }
         return predicate;
     },
@@ -1581,47 +1574,34 @@ var ln2365539311 = {
         return false;
     },
 
-    
-    sample:function(collection){
-        var type = this.judgeType(collection);
-        if(type=="Array"){
-            var num = Math.floor(Math.random()*(type.length));
-            return collection[num];
-        }else if(type=="Object"){
-            var num = Math.random()*(Object.values(type).length);
-            return collection[num];
-        }
+
+// =============================================Lang 语言部分 ==============================================
+
+
+
+    castArray:function(value){
+        return Array.of(value);
     },
 
-    sampleSize:function(collection,n=1){
-        var n = Math.floor(Math.random()*(collection.length));
-        var len = collection.length;
-        var res = [];
-        for(var i=n%len; i<len; i++){
-            res.push(collection[i]);
-        }
-        for(var i=0; i<collection.length; i++){
-            if(res.length<n && !res.includes(collection[i])){
-                res.push(collection[i]);
+    /**
+     * 
+     * @param {Object} object 
+     * @param {Object} source
+     * @param {Boolean} (boolean): Returns true if object conforms, else false. 
+     */
+    conformsTo:function(object,source){
+        for(var key in object){
+            var iterator = this.typeConvertValForFilter(source[key]);
+            if(iterator!=undefined){
+                if(iterator(object[key])){
+                    return true;
+                }
             }
         }
-        return res;
+        return false;
     },
-    
-    shuffle:function(collection){  // 洗牌算法 - 打乱数组
-        var n = collection.length;
-        for(var i=0; i<n; i++){
-            var randNum = i+Math.floor(Math.random()*(n-i));
-            var tmp = collection[i];
-            collection[i] = collection[randNum];
-            collection[randNum]=tmp;
-        }
-        return collection;
-    },
-    
-    size:function(collection){
-        return Object.values(collection).length;
-    },
+
+
     
     eq:function(value, other){
         if(value!==value && other!==other){
@@ -1641,7 +1621,7 @@ var ln2365539311 = {
     
     isArguments:function(value){
         var res = this.judgeType(value);
-        if(res=='Object' && Object.entries().length!=0){
+        if(res=='Object' && Object.entries(value).length!=0){
             return true;
         }
         return false;
@@ -1654,12 +1634,39 @@ var ln2365539311 = {
         return false
     },
 
+    isArrayBuffer:function(value){
+        return this.judgeType(value)=="ArrayBuffer";
+    },
+
+    isArrayLike:function(value){
+        if(this.judgeType(value)!=="Function"){
+            if(value.length && value.length>=0 && value.length<=Math.pow(2,31)-1){
+                return true;
+            }
+        }
+        return false;
+    },
+
+    isArrayLikeObject:function(value){
+        return typeof value=="object";
+    },
+
+
     isBoolean:function(value){
         return this.judgeType(value)=='Boolean';
     },
 
     isDate:function(value){
         return this.judgeType(value)=='Date';
+    },
+
+
+    isElement:function(value){
+        return typeof value == "object";
+    },
+
+    isEmpty:function(value){
+        return value!=null?true:false;
     },
 
 
@@ -1670,13 +1677,17 @@ var ln2365539311 = {
                 return false;
             }
             for(var key in value){
-                if(value[key]!=other[key]){
+                if(typeof value[key]=='object' && typeof other[key]=='object' && ln2365539311.isEmpty(value[key]) && ln2365539311.isEmpty(other[key])){
+                    return true;
+                }else if(value[key]!=other[key]){
                     return false;
-                }else if(typeof value[key]=="object"){  //  如果 键 仍然为 对象或其它 递归进行
-                    ln2365539311.isEqual(value[key]);
+                }else if(typeof value[key]=="object" && typeof other[key]!="object"){  
+                    return false;
+                }else if(typeof value[key]=='object' && typeof other[key]=='object'){//  如果 键 仍然为 对象或其它 递归进行
+                    ln2365539311.isEqual(value[key],other[key]);
                 }
             }
-        }else if(typeof value != typeof other){
+        }else if(this.judgeType(value)!=this.judgeType(other)){
             return false;
         }else if(value != other){
             return false;
@@ -1684,7 +1695,130 @@ var ln2365539311 = {
         return true;
     },
     
+    isEqualWith: function (value, other, customizer) {
+        if (value instanceof Array && other instanceof Array) {
+            if (value.length !== other.length) return false;
+            var result = true;
+            result = result && this.isEqualWith(value[0], other[0], customizer);
+            // if(result===false)break;
+            return result;
+        } else if (typeof value === 'object' && typeof other === 'object') {
+            var count1 = 0;
+            var count2 = 0;
+            for (var key in value) {
+                count1++;
+            }
+            for (var key in other) {
+                count2++;
+            }
+            if (count2 !== count1) return false;
 
+            for (var key in value) {
+                if (!this.isEqualWith(value[key], other[key], customizer)) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            if (customizer(value, other)) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    },
+    isError: function (value) {
+        return value instanceof Error;
+    },
+    isFinite: function (value) {
+        return typeof value === 'number' && isFinite(value);
+    },
+    isFunction: function (value) {
+        return typeof value === 'function';
+    },
+    isInteger: function (value) {
+        return typeof value === 'number' && isFinite(value) && parseInt(value) === value;
+    },
+    isLength: function (value) {
+        return this.isInteger(value) && (value >= 0);
+    },
+    isMap: function (value) {
+        return value instanceof Map;
+    },
+    isMatch: function (object, source) {
+        for (var key in source) {
+            if (typeof source[key] !== 'object') {
+                if (source[key] !== object[key]) {
+                    return false;
+                }
+            } else {
+                if (!this.isMatch(source[key], object[key])) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    },
+    isMatchWith: function (object, source, customizer) {
+        for (var key in source) {
+            if (!customizer(source[key], object[key])) {
+                return false;
+            }
+        }
+        return true;
+    },
+    isNaN: function (value) {
+        if (value === null || value === undefined) return false;
+        return value.constructor === Number && !(value === value);
+    },
+    isNative: function (value) {
+
+    },
+    isNil: function (value) {
+        return value === null || value === undefined;
+    },
+    isNull: function (value) {
+        return value === null;
+    },
+    isNumber: function (value) {
+        return typeof value === 'number';
+    },
+    isObject: function (value) {
+        return (typeof value === 'object' || typeof value === 'function') && value !== null;
+    },
+    isObjectLike: function (value) {
+        return typeof value === 'object' && value !== null;
+    },
+    isPlainObject: function (value) {
+        return value.constructor === Object;
+    },
+    isRegExp: function (value) {
+        return value instanceof RegExp;
+    },
+    isSafeInteger: function (value) {
+        return this.isInteger(value) && Number.isSafeInteger(value);
+    },
+    isSet: function (value) {
+        return value instanceof Set;
+    },
+    isString: function (value) {
+        return typeof value === 'string';
+    },
+    isSymbol: function (value) {
+        return typeof value === "symbol";
+    },
+    isTypedArray: function (value) {
+        return value instanceof Uint16Array || value instanceof Uint32Array || value instanceof Uint8Array || value instanceof Uint8ClampedArray;
+    },
+    isUndefined: function (value) {
+        return value === undefined;
+    },
+    isWeakMap: function (value) {
+        return value instanceof WeakMap;
+    },
+    isWeakSet: function (value) {
+        return value instanceof WeakSet;
+    },
 
     lt:function(value, other){
         return value < other
@@ -2301,7 +2435,7 @@ var ln2365539311 = {
     },
 
     /**
-     * 
+     * 对不同字段进行不同的排序
      * @param {Array|Object} collection 被迭代的集合
      * @param {Array[] | Function[] | Object[] | String[]} iteratees 迭代的顺序  
      * @param {Strings[]} orders  
@@ -2310,8 +2444,209 @@ var ln2365539311 = {
         
     },
 
+    partition:function(collection,predicate){
+        var predicator=this.typeConvertValForFilter(predicate);
+        var res=[];
+        var firstArr = [];
+        var secArr = [];
+        // 对 collection key排序
+        for(var key in collection){
+            if(predicator(collection[key])){
+                firstArr.push(collection[key]);
+            }else{
+                secArr.push(collection[key]);
+            }
+        }
+        res.push(firstArr,secArr);
+        return res;
+    },
+
+    /**
+     * 
+     * @param {Array|Object} collection 
+     * @param {Function} iteratee 
+     * @param {*} accumulator 
+     */
+    reduce:function(collection,iteratee,accumulator){
+        // 叠加器
+        var reducer = this.typeConvertValForFilter(iteratee);
+        // 先默认为数组的长度
+        if(Array.isArray(collection))
+            keyArr = collection.length;
+        // 如果是对象，把数组的长度覆盖，走对象的
+        if(this.judgeType(collection) == "Object"){
+            objKeys = Object.keys(collection);
+            keyArr=objKeys.length;
+        }
+        // 默认 索引为0
+        var index = 0;
+        // 如果参数只有两个，更改叠加器为集合的第一个元素
+        if(arguments.length==2){
+            if(Array.isArray(collection))
+                accumulator=collection[0];
+            if(this.judgeType(collection)=="Object"){
+                accumulator=keyArr[0];
+            }
+            index=1;
+        }
+        while(index<keyArr){
+            if(Array.isArray(collection))
+                accumulator=reducer(accumulator,collection[index],index);
+            if(this.judgeType(collection)=="Object"){
+                accumulator=reducer(accumulator,collection[objKeys[index]],objKeys[index]);
+            }
+            index++;
+        }
+        return accumulator;
+    },
+
+    /**
+     * 
+     * @param {Array|Object} collection 
+     * @param {Function} iteratee 
+     * @param {*} accumulator 
+     */
+    reduceRight:function(collection,iteratee,accumulator){
+        // 叠加器
+        var reducer = this.typeConvertValForFilter(iteratee);
+        // 先默认为数组的长度
+        if(Array.isArray(collection))
+            keyArr = collection.length;
+        // 如果是对象，把数组的长度覆盖，走对象的
+        if(this.judgeType(collection) == "Object"){
+            objKeys = Object.keys(collection);
+            keyArr=objKeys.length;
+        }
+        // 默认 索引为0
+        var index = keyArr-1;
+        // 如果参数只有两个，更改叠加器为集合的第一个元素
+        if(arguments.length==2){
+            if(Array.isArray(collection))
+                accumulator=collection[index];
+            if(this.judgeType(collection)=="Object"){
+                accumulator=keyArr[index];
+            }
+            index=collection.length-1;
+        }
+        while(index>=0){
+            if(Array.isArray(collection))
+                accumulator=reducer(accumulator,collection[index],index);
+            if(this.judgeType(collection)=="Object"){
+                accumulator=reducer(accumulator,collection[objKeys[index]],objKeys[index]);
+            }
+            index--;
+        }
+        return accumulator;
+    },
+
+    /**
+     * 返回不为真的元素
+     * @param {Array|Object} ary 
+     * @param {Function} test 
+     */
+    reject:function(ary,test){
+        var testor = this.typeConvertValForFilter(test);
+		return ln2365539311.filter(ary,ln2365539311.negate(testor));
+	},
+
+    sample:function(collection){
+        var type = this.judgeType(collection);
+        if(type=="Array"){
+            var num = Math.floor(Math.random()*(type.length));
+            return collection[num];
+        }else if(type=="Object"){
+            var num = Math.random()*(Object.values(type).length);
+            return collection[num];
+        }
+    },
+
+    sampleSize:function(collection,n=1){
+        var n = Math.floor(Math.random()*(collection.length));
+        var len = collection.length;
+        var res = [];
+        for(var i=n%len; i<len; i++){
+            res.push(collection[i]);
+        }
+        for(var i=0; i<collection.length; i++){
+            if(res.length<n && !res.includes(collection[i])){
+                res.push(collection[i]);
+            }
+        }
+        return res;
+    },
+    
+    shuffle:function(collection){  // 洗牌算法 - 打乱数组
+        var n = collection.length;
+        for(var i=0; i<n; i++){
+            var randNum = i+Math.floor(Math.random()*(n-i));
+            var tmp = collection[i];
+            collection[i] = collection[randNum];
+            collection[randNum]=tmp;
+        }
+        return collection;
+    },
+
+    size:function(collection){
+        return Object.values(collection).length;
+    },
+
+    some:function(collection,iteratee){
+        var iterator = this.typeConvertValForFilter(iteratee);
+        for(var key in collection){
+            if(iterator(collection[key])){
+                return true;
+            }
+        }
+        return false;
+    },
+
+
+    /**
+     * 
+     * @param {Array|Object} collection 被迭带的集合
+     * @param {...(Function|Function[]} iteratees 迭代器顺序
+     */
+    sortBy:function(collection,iteratees){
+        iteratees=this.typeConvert(iteratees);
+        var res=[];
+
+    },
 
     //===========================================  Function  Model  =>   函数模块 ===========================================
+    after:function(n,func){
+		var times = 0;
+		return function(...args){
+			times++;
+			if(times<n){
+				// do nothing
+				return;
+			}else{
+				return func(...args);
+			}
+		}
+	},
+
+    ary:function(func,n=f.length){
+		return function(...args){
+			return func(...args.slice(0,n));
+		}
+    },
+    
+    
+
+    before:function(n,func){
+		var times = 0;
+		var lastCall;
+		return function(...args){
+			times++;
+			if(times<n){
+				return lastCall = func(...args);
+			}else{
+				return lastCall;
+			}
+		}
+	},
+
 
     bind:function(f,obj,...fixedArgs){
         // 双指针实现
@@ -2337,6 +2672,23 @@ var ln2365539311 = {
     },
 
     /**
+     * 
+     * @param {*} func 
+     * @param {*} args 
+     */
+    defer:function(func){
+        return function(...reArg){
+            return func(...reArg);
+        }
+    },
+
+    delay:function(func,wait){
+        return function(...args){
+            setTimeout(func(...args),wait);
+        }
+    },
+
+    /**
      * 对函数取反
      * @param {Function} f 入参函数
      */
@@ -2353,38 +2705,10 @@ var ln2365539311 = {
     },
 
 
-    before:function(n,func){
-		var times = 0;
-		var lastCall;
-		return function(...args){
-			times++;
-			if(times<n){
-				return lastCall = func(...args);
-			}else{
-				return lastCall;
-			}
-		}
-	},
+    
 
 
-	after:function(n,func){
-		var times = 0;
-		return function(...args){
-			times++;
-			if(times<n){
-				// do nothing
-				return;
-			}else{
-				return func(...args);
-			}
-		}
-	},
-
-    ary:function(func,n=f.length){
-		return function(...args){
-			return func(...args.slice(0,n));
-		}
-	},
+	
 
 	unary:function(func){
 		return this.ary(func,1);
@@ -2407,9 +2731,7 @@ var ln2365539311 = {
 		}
 	},
 
-    reject:function(ary,test){
-		return this.filter(ary,this.negate(test));
-	},
+    
 
 
     forOwn:function(obj,action){
