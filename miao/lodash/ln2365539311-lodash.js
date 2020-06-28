@@ -2151,7 +2151,7 @@ var ln2365539311 = {
         return number >= start && number < end;
     },
 
-    random:function(){
+    random:function(lower=0,upper=1,floating){
 
     },
     
@@ -2160,6 +2160,16 @@ var ln2365539311 = {
     
     assign:function(object, ...sources){
         return Object.assign(object,...sources);
+    },
+
+    assignIn:function(...objects){
+        let ans = {};
+        for (let i in objects) {
+            for (let j in objects[i]) {
+                ans[j] = objects[i][j];
+            }
+        }
+        return ans;
     },
 
     at:function(object, ...paths){
@@ -2185,6 +2195,117 @@ var ln2365539311 = {
         return target;
     },
     
+    defaultsDeep:function(target,...source){  //  { 'a': { 'b': 2 } }, { 'a': { 'b': 1, 'c': 3 } }
+        var res = {};
+        for(var i in source){
+            for(var j in source[i]){ //  {'b':1,'c':3}
+                var jVal = source[i][j];
+                var type = this.judgeType(jVal);
+                if(type == "Object"){
+                    this.defaultsDeep(jVal);
+                }else if(!target[i]){
+                    target[i]=source[i][j];
+                }
+            }
+        }
+        return res;
+    },
+
+
+    findKey:function(object,predicate){
+        var predicator = this.typeConvertValForFilter(predicate);
+        for(var key in object){
+            if(predicator(object[key],key,object)){
+                return key;
+            }
+        }
+    },
+
+    findLastKey:function(object,predicate){
+        var predicator = this.typeConvertValForFilter(predicate);
+        var index = keyArr.length-1;
+        var keyArr = Object.keys(object);
+        while(index<keyArr.length){
+            if(predicator(object[index],index,object)){
+                return key;
+            }
+            index++;
+        }
+    },
+
+    forIn:function(object,iteratee){
+        var iterator = this.typeConvertValForFilter(iteratee);
+        // var newIterator = iterator.call(object);
+        for(var i in object){
+            iterator(object[i],i,object);
+        }
+    },
+
+    forInRight:function(object,iteratee){
+        var iterator = this.typeConvertValForFilter(iteratee);
+        var keyArr = [];
+        for(var key in object){
+            keyArr.push(key);
+        }
+        var index = keyArr.length-1;
+        while(index>=0){
+            iterator(object[keyArr[index]],keyArr[index],object);
+            index--;
+        }
+    },
+
+        
+    forOwn:function(obj,action){
+        var hasOwn=Object.prototype.hasOwnProperty;
+        for(var key in obj){
+            if(hasOwn.call(obj,key)){
+                action(obj[key],key,obj);
+            }
+        }
+        return obj;
+    },
+
+    // 从后往前
+    forOwnRight:function(object,iteratee){
+        var iterator = this.typeConvertValForFilter(iteratee);
+        var keyArr = [];
+        for(var key in object){
+            keyArr.push(key);
+        }
+        var hasOwn=Object.prototype.hasOwnProperty;
+        var index = keyArr.length-1;
+        while(index>=0){
+            if(hasOwn.call(object,keyArr[index])){
+                iterator(object[keyArr[index]],keyArr[index],object);
+            }
+            index--;
+        }
+        return object;
+    },
+
+    functions:function(obj){
+        var hasOwn=Object.prototype.hasOwnProperty;
+        var res = [];
+        for(var key in obj){
+            if(hasOwn.call(obj,key)){
+                res.push(key); 
+            }
+        }
+        return res;
+    },
+
+    functionsIn:function(object){
+        var res = [];
+        for(var key in object){
+            res.push(key);
+        }
+        return res;
+    },
+
+    
+
+
+
     /**
      * 根据路径返回值，如果为undefined则返回默认值
      * @param {Object} object 传入的对象
@@ -2239,56 +2360,9 @@ var ln2365539311 = {
     // 检验属性是否存在的递归函数,没有的话递归创建
 
     
-    /**
-     * 设置对象路径的值。如果路径的一部分不存在，则会创建它。 为缺少的索引属性创建数组，而为所有其他缺少的属性创建对象。 使用_.setWith自定义路径创建。
-     * @param {Object} object 入参对象
-     * @param {String|Array} path 路径
-     * @param {*} value 设置路径的值
-     */
-    set:function(object, path, value){
-        if(typeof path == "string"){
-            var arr = path.split('.');
-            var str = 'object';
-            for(var i=0; i<arr.length; i++){
-                str+='.'+arr[i];
-                if(eval(str) && i==arr.length-1){
-                    eval(str+"="+value);
-                }
-            }
-            return object;
-        }else if(typeof path == "object"){
-            var s = 'object.';
-            for(var key=0; key<path.length; key++){
-                var tmp = s;
-                if(!/\d+/.test(path[key])){  // 如果当前元素存在数字的话 期望不进行编辑
-                    tmp=tmp.substring(0,tmp.length-1);
-                }
-                if(key>0 && eval(tmp)==undefined){
-                    // 判断 path[key] 是什么 然后设置相应的类型
-                    if(/\d+/.test(path[key])){  // 当前元素的下一个元素是 数字 代表 为数组
-                        // 设置数组
-                        eval(tmp+'=[]');
-                        eval(tmp+'['+path[key]+']={}');
-                    }else{
-                        eval(tmp+'={}');
-                        eval(tmp+'.'+path[key]+'={}');   // 前一个y都没有就直接设置后面的z会直接报错
-                    }
-                }
-                if(/\d+/.test(path[key])){
-                    path[key]='['+path[key]+']';
-                }
-                if(/\d+/.test(path[key+1])){
-                    s=s+path[key];
-                }else{    
-                    s=s+path[key]+'.';
-                }
-            }
-            s=s.substring(0,s.length-1);
-            eval(s+"="+value);
-            return object;
-        }
-    },
     
+
+
     /**
      * 
      * @param {Object} object 对象
@@ -2349,20 +2423,44 @@ var ln2365539311 = {
         return res;
     },
     
+    invertBy:function(object,iteratee){
+        /*
+        var iterator = this.typeConvertValForFilter(iteratee);
+        var res = {};
+        var keyArr = [];
+        for(var key in object){
+            var valArr = [];
+            if(valArr.includes(object[key])){
+                keyArr.push(key);
+            }else{
+
+            }
+        }
+        */
+    },
+
+
+    invoke:function(){
+
+    },
+
+
+
+
     keys:function(object){
         return Object.keys(object);
     },
     
-    
-    forOwn:function(obj,action){
-        var hasOwn=Object.prototype.hasOwnProperty;
-        for(var key in obj){
-            if(hasOwn.call(obj,key)){
-                action(key,map[obj],obj);
-            }
+
+    keysIn:function(object){
+        var res = [];
+        for(var key in object){
+            res.push(key);
         }
-        return obj
+        return res;
     },
+
+
 
 
 
@@ -2389,6 +2487,13 @@ var ln2365539311 = {
 		return res;
 	},
     
+    merge:function(){
+
+    },
+
+    mergeWith:function(){
+
+    },
 
     
     omit:function(object,...paths){
@@ -2399,6 +2504,18 @@ var ln2365539311 = {
         return object;
     },
     
+    omitBy:function(object,predicate){
+        var res = {};
+        var predicator = this.typeConvertValForFilter(predicate);
+        for(var key in object){  // a
+            if(!predicator(object[key],key,object)){
+                res[key]=object[key];
+            }
+        }
+        return res;
+    },
+
+
     pick:function(object,...paths){
         var res = {};
         var flatPath = paths.flat();
@@ -2408,11 +2525,161 @@ var ln2365539311 = {
         return res;
     },
     
+
+    pickBy:function(object,predicate){
+        var predicator = this.typeConvertValForFilter(predicate);
+        var res = {};
+        for(var key in object){  // a
+            if(predicator(object[key],key,object)){
+                res[key]=object[key];
+            }
+        }
+        return res;
+    },
+
+
+    result:function(object,path,defaultValue=undefined){
+        if (path.length == 0) return object
+        var p = null
+        if (typeof path == 'string') {
+            // 'a[0].b.c'
+            // ".a[0].b.c".split(/[^\w]+/) -> ['', 'a', '0', 'b', 'c'] 注意首位会有个''
+            p = path.split(/[^\w]+/g)
+        }
+
+        if (!p) p = Array.from(path)
+        var ret = object
+        while (ret !== undefined && p.length > 0) {
+            ret = ret[p.shift()]
+        } 
+        if (ret === undefined){
+            if(this.judgeType(defaultValue)=="Function"){
+                return defaultValue();
+            }else{
+                return defaultValue;
+            }
+        }else{
+            if(this.judgeType(ret)=="Function"){
+                return ret();
+            }else{
+                return ret;
+            }
+        }
+    },
+
+    /**
+     * 设置对象路径的值。如果路径的一部分不存在，则会创建它。 为缺少的索引属性创建数组，而为所有其他缺少的属性创建对象。 使用_.setWith自定义路径创建。
+     * @param {Object} object 入参对象
+     * @param {String|Array} path 路径
+     * @param {*} value 设置路径的值
+     */
+    set:function(object, path, value){
+        if(typeof path == "string"){
+            var arr = path.split('.');
+            var str = 'object';
+            for(var i=0; i<arr.length; i++){
+                str+='.'+arr[i];
+                if(eval(str) && i==arr.length-1){
+                    eval(str+"="+value);
+                }
+            }
+            return object;
+        }else if(typeof path == "object"){
+            var s = 'object.';
+            for(var key=0; key<path.length; key++){
+                var tmp = s;
+                if(!/\d+/.test(path[key])){  // 如果当前元素存在数字的话 期望不进行编辑
+                    tmp=tmp.substring(0,tmp.length-1);
+                }
+                if(key>0 && eval(tmp)==undefined){
+                    // 判断 path[key] 是什么 然后设置相应的类型
+                    if(/\d+/.test(path[key])){  // 当前元素的下一个元素是 数字 代表 为数组
+                        // 设置数组
+                        eval(tmp+'=[]');
+                        eval(tmp+'['+path[key]+']={}');
+                    }else{
+                        eval(tmp+'={}');
+                        eval(tmp+'.'+path[key]+'={}');   // 前一个y都没有就直接设置后面的z会直接报错
+                    }
+                }
+                if(/\d+/.test(path[key])){
+                    path[key]='['+path[key]+']';
+                }
+                if(/\d+/.test(path[key+1])){
+                    s=s+path[key];
+                }else{    
+                    s=s+path[key]+'.';
+                }
+            }
+            s=s.substring(0,s.length-1);
+            eval(s+"="+value);
+            return object;
+        }
+    },
+    
+
+    
+    setWith:function(object,path,value,customizer){
+        
+    },
+
+
+    toPairs:function(object){
+        var res = [];
+        var hasOwn = Object.prototype.hasOwnProperty;
+        for(var key in object){
+            if(hasOwn.call(object,key)){
+                var tmp = [];
+                tmp.push(key,object[key]);
+                res.push(tmp);
+            }
+        }
+        return res;
+    },
+
+
+
+    toPairsIn:function(object){
+        var res = [];
+        for(var key in object){
+            var tmp = [];
+            tmp.push(key,object[key]);
+            res.push(tmp);
+        }
+        return res;
+    },
+
+
+    transform:function(object,iteratee,accumulator){
+        
+    },  
+
+
+    unset:function(){
+
+    },
+
+
+    update:function(){
+
+    },
+
+
+    updateWith:function(){
+
+    },
+
     values:function(object){
         return Object.values(object);
     },
 
-
+    valuesIn:function(object){
+        var res = [];
+        for(var key in object){
+            res.push(object[key]);
+        }
+        return res;
+    },
 
 //============================================ String - 字符串模块 =================================================
 
@@ -2562,6 +2829,14 @@ var ln2365539311 = {
         return false;
     },
     
+    toLower:function(string=""){
+        return string.toLocaleLowerCase();
+    },
+
+    toUpper:function(string=""){
+        return string.toLocaleUpperCase();
+    },
+
     trim:function(string='',chars='\\s'){
         var res = string;
 		var charArr = chars.split('');
@@ -2934,5 +3209,15 @@ var ln2365539311 = {
     },
 
     // 用 bind 绑定一下函数试试
+
+
+
+    constant:function(value){
+        return function(){
+            return value;
+        }
+    }
+
+
 
 }
