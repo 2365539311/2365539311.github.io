@@ -1656,6 +1656,18 @@ var ln2365539311 = {
         }
     },
     
+    once:function(func){
+        var count = 0;
+        var res = null;
+        return function(...args){
+            if(count>1){
+                return res;
+            }
+            res=func.call(null,...args);
+            return res;
+        }
+    },
+
     flip:function(func){
         return function(...args){
             return func(...args.reverse());
@@ -1691,6 +1703,24 @@ var ln2365539311 = {
 
     castArray:function(value){
         return Array.of(value);
+    },
+
+
+    clone:function(value){
+        var res = value;
+        return res;
+    },
+
+    cloneDeep:function(value){
+        var res = {};
+        for(var key in value){
+            if(this.judgeType(value[key])!=="Object"){
+                res[key] = value[key];
+            }else{
+                res[key]=ln2365539311.cloneDeep(value[key]);
+            }
+        }
+        return res;
     },
 
     /**
@@ -2978,7 +3008,55 @@ var ln2365539311 = {
         }
     },
     
-
+    rangeRight:function(start=0,end,step=1){
+        var res = [];
+        if(arguments.length==1){
+            if(arguments[0]>0){
+                for(var i=start-1; i>=0; i-=1){
+                    res.push(i);
+                }
+                return res;
+            }else if(arguments[0]<0){
+                for(var i=start+1; res.length<Math.abs(start); i+=1){
+                    res.push(i);
+                }
+                return res;
+            }else if(arguments[0]==0){
+                return res;
+            }
+        }
+        // 两个或三个参数
+        if(step==0){
+            for(var i=start; res.length<end-1; i-=step){
+                res.push(i);
+            }
+            return res;
+        }
+        if(end>0){
+            if(step!=1){
+                for(var i=end-step; i>=0; i-=step){
+                    res.push(i);
+                }
+            }else{
+                for(var i=end-step; i>0; i-=step){
+                    res.push(i);
+                }
+            }
+            return res;
+        }else if(end<0){
+            if(step<0){
+                for(var i=end+1; i<=start; i-=step){
+                    res.push(i);
+                }
+                return res;
+            }else{
+                for(var i=end; i>end; i+=step){
+                    res.push(i);
+                }
+                return res;
+            }
+        }
+    },
 
     //================================================ Util Model  =>    工具模块 ===========================================
     
@@ -3220,6 +3298,18 @@ var ln2365539311 = {
     // 用 bind 绑定一下函数试试
 
 
+    conforms:function(source){
+        return function(predicate){
+            var predicator = this.typeConvertValForFilter(predicate);
+            for(var key in source){
+                if(predicator(source[key],key,source)){
+                    return true;
+                }
+            }
+            return false;
+        }
+    },
+
 
     constant:function(value){
         return function(){
@@ -3227,8 +3317,133 @@ var ln2365539311 = {
         }
     },
 
+    defaultTo:function(value,defaultValue){
+        // 判断是不是NaN
+        if(value!=value && Number.isNaN(value)){
+            return defaultValue;
+        }
+        if(value==null || value == undefined){
+            return defaultValue;
+        }
+        return value;
+    },
+
+    flow:function(...funcs){
+        return function(...args){
+            var funcArr = Array.from(funcs).flat();
+            while(funcArr.length){
+                var lastArg = funcArr.shift()(...args);
+                args=Array.of(lastArg);
+            }
+            return lastArg;
+        }
+    },
+
     idenity:function(value){
         return value;
+    },
+
+    method:function(path,...args){
+        if(this.judgeType(path)=="String"){
+            path=path.match(/\w+/g);
+        }
+        var argsArr = Array.from(args).flat();
+        return function(obj){
+            for(var i=0; i<path.length; i++){
+                obj=obj[path[i]];
+            }
+            return obj(...argsArr);
+        }
+    },
+
+    methodOf:function(obj,...args){
+        var argsArr = Array.from(args).flat();
+        var str = null;
+        return function(value){
+            var tmp = null;
+            str = value;
+            if(ln2365539311.judgeType(value)=="String"){
+                str = str.match(/\w+/g);
+            }
+            var res = ln2365539311.cloneDeep(obj);
+            for(var i=0; i<str.length; i++){
+                if(i==str.length-1){
+                    res = tmp[str[i]];
+                    break;
+                }
+                tmp=res[str[i]];
+            }
+            return res(...argsArr);
+        }
+    },
+
+    nthArg:function(n=1){
+        return function(...args){
+            var argsArr = Array.from(args);
+            if(n>0){
+                return argsArr[n];
+            }else{
+                return argsArr[argsArr.length+n];
+            }
+        }
+    },
+
+    propertyOf:function(path){
+        var str = null;
+        return function(value){
+            var tmp = null;
+            str = value;
+            if(ln2365539311.judgeType(value)=="String"){
+                str = str.match(/\w+/g);
+            }
+            var res = ln2365539311.cloneDeep(path);
+            for(var i=0; i<str.length; i++){
+                if(i==str.length-1){
+                    res = tmp[str[i]];
+                    break;
+                }
+                tmp=res[str[i]];
+            }
+            return res;
+        }
+    },
+
+    parseJson:function(json){
+        return JSON.parse(json);
+    },
+
+    stringifyJson:function(obj){
+        return JSON.stringify(obj);
+    },
+
+    times:function(n,iteratee){
+        var iterator = this.typeConvertValForFilter(iteratee);
+        var res = [];
+        for(var i=0; i<n; i++){
+            res.push(iterator(i));
+        }
+        return res;
+    },
+
+    toPath:function(value){
+        return value.match(/\w+/g);
+    },
+
+    uniqueId:function(prefix=""){
+        var uuid = this.generateUUID();
+        return prefix+uuid;
+    },
+    generateUUID:function(){
+        var d = new Date().getTime();
+        if (window.performance && typeof window.performance.now === "function") {
+            d += performance.now(); //use high-precision timer if available
+        }
+        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = (d + Math.random() * 16) % 16 | 0;
+            d = Math.floor(d / 16);
+            return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+        return uuid;
     }
 
 }
