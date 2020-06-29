@@ -1667,7 +1667,7 @@ var ln2365539311 = {
     },
     
     spread:function(func){
-		return function(...args){
+		return function(args){
 			return func(...args);
 		}
     },
@@ -1966,18 +1966,25 @@ var ln2365539311 = {
     toArray:function(value){
         if(value==null) return [];
         var res=[];
-        for(var val of value){
-            res.push(val);
+        for(var val in value){
+            res.push(value[val]);
         }
         return res;
     },
 
-    toFinite:function(){
+    toFinite:function(value){
         if (this.isFinite(Number(value))) return Number(value);
         else return Number(value) > Number.MAX_VALUE ? Number.MAX_VALUE : Number.MIN_VALUE;
     },
     
     toInteger:function(value){
+        if(value==Infinity){
+            return Number.MAX_VALUE;
+        }
+        if(value==-Infinity){
+            return Number.MIN_VALUE;
+        }
+        
         return value==null?null:Math.floor(value);
     },
 
@@ -2223,22 +2230,22 @@ var ln2365539311 = {
 
     findLastKey:function(object,predicate){
         var predicator = this.typeConvertValForFilter(predicate);
-        var index = keyArr.length-1;
         var keyArr = Object.keys(object);
+        var index = keyArr.length-1;
         while(index<keyArr.length){
-            if(predicator(object[index],index,object)){
-                return key;
+            if(predicator(object[keyArr[index]],keyArr[index],object)){
+                return keyArr[index];
             }
-            index++;
+            index--;
         }
     },
 
     forIn:function(object,iteratee){
         var iterator = this.typeConvertValForFilter(iteratee);
-        // var newIterator = iterator.call(object);
         for(var i in object){
             iterator(object[i],i,object);
         }
+        return object;
     },
 
     forInRight:function(object,iteratee){
@@ -2252,6 +2259,7 @@ var ln2365539311 = {
             iterator(object[keyArr[index]],keyArr[index],object);
             index--;
         }
+        return object;
     },
 
         
@@ -2479,10 +2487,11 @@ var ln2365539311 = {
     },
 
     mapValues:function(obj,mapper){  // 对应 objectValues
+        var iterator = this.typeConvertValForFilter(mapper);
 		var res = {};
 		for(var key in obj){
 			var val=obj[key];
-			res[key]=mapper(val,key,obj);
+			res[key]=iterator(val,key,obj);
 		}
 		return res;
 	},
@@ -3216,8 +3225,10 @@ var ln2365539311 = {
         return function(){
             return value;
         }
+    },
+
+    idenity:function(value){
+        return value;
     }
-
-
 
 }
